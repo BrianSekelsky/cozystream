@@ -1,0 +1,181 @@
+<div class="relative min-h-screen">
+  <!-- Backdrop (only in backdrop layout) -->
+  @if (ds.settings().detailLayout === 'backdrop' && item()?.backdrop_url) {
+    <div class="absolute -top-16 left-0 right-0 h-[82vh] overflow-hidden pointer-events-none">
+      <img [src]="item()!.backdrop_url!" alt=""
+        [class]="'w-full h-full object-cover object-top opacity-35 ' + backdropBlurClass()" />
+      @if (ds.settings().detailBackdropTint) {
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface/70 to-surface"></div>
+      }
+    </div>
+  } @else if (ds.settings().detailLayout === 'poster-header' && item()?.backdrop_url) {
+    <div class="-mt-16 h-[35vh] overflow-hidden pointer-events-none">
+      <img [src]="item()!.backdrop_url!" alt=""
+        [class]="'w-full h-full object-cover object-[center_20%] ' + backdropBlurClass()" />
+    </div>
+  }
+
+  <div class="relative z-10 px-8 lg:px-16 xl:px-24 pt-10 pb-16 max-w-6xl mx-auto">
+    <!-- Back -->
+    <button (click)="goBack()"
+      class="flex items-center gap-2 text-white/60 hover:text-white text-sm mb-6 transition-colors">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      Back
+    </button>
+
+    @if (loading()) {
+      <div class="flex items-center justify-center h-64 text-white/40">Loading...</div>
+    } @else if (item()) {
+
+      <!-- Hero: Poster + Info side by side -->
+      <div class="flex items-start gap-10">
+        <!-- Poster -->
+        @if (item()!.poster_url) {
+          <div [class]="'w-56 lg:w-64 flex-shrink-0 overflow-hidden shadow-2xl self-start ' + posterCornerClass()">
+            <img [src]="item()!.poster_url!" [alt]="item()!.title" class="w-full block" />
+          </div>
+        }
+
+        <!-- Info -->
+        <div class="flex-1 min-w-0">
+          <!-- Title -->
+          <h1 [class]="'text-3xl lg:text-4xl font-bold leading-tight text-white ' + ds.titleFontClass()">{{ item()!.title }}</h1>
+
+          <!-- Genre pills -->
+          @if (genres().length > 0) {
+            <div [class]="'flex flex-wrap gap-1.5 mt-3 ' + ds.detailFontClass()">
+              @for (g of genres(); track g) {
+                <span class="px-2.5 py-0.5 rounded-full border border-white/20 text-xs text-white/70 uppercase">{{ g }}</span>
+              }
+            </div>
+          }
+
+          <!-- Meta row -->
+          <div [class]="'flex flex-wrap items-center gap-3 mt-3 text-sm text-white/60 ' + ds.detailFontClass()">
+            @if (item()!.year) { <span>{{ item()!.year }}</span> }
+            @if (item()!.duration) {
+              <span class="text-white/30">·</span>
+              <span>{{ formatDuration(item()!.duration) }}</span>
+            }
+            <!-- @if (item()!.rating) {
+              <span class="text-white/30">·</span>
+              <span class="flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                </svg>
+                {{ item()!.rating!.toFixed(1) }}
+              </span>
+            } -->
+            @if (credits()?.language) {
+              <span class="text-white/30">·</span>
+              <span>{{ credits()!.language }}</span>
+            }
+            <!-- @if (item()!.file_size) {
+              <span class="text-white/30">·</span>
+              <span>{{ formatFileSize(item()!.file_size) }}</span>
+            } -->
+            @if (directors().length) {
+              <span class="text-white/30">·</span>
+              <span>{{ directorNames() }}</span>
+            }
+          </div>
+
+          <!-- Description -->
+          @if (item()!.description) {
+            <p [class]="'mt-4 text-white/80 leading-relaxed text-sm max-w-2xl ' + ds.bodyFontClass()">{{ item()!.description }}</p>
+          }
+
+          <!-- Actions -->
+          <div [class]="'flex gap-3 mt-6 ' + ds.detailFontClass()">
+            <button (click)="play(false)"
+              class="flex items-center gap-2 bg-white text-black px-6 py-2.5 rounded font-semibold text-sm hover:bg-white/90 transition-colors">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              {{ canResume() ? 'Resume' : 'Play' }}
+            </button>
+            @if (canResume()) {
+              <button (click)="play(true)"
+                class="flex items-center gap-2 bg-white/10 text-white px-5 py-2.5 rounded font-medium text-sm hover:bg-white/20 transition-colors">
+                Play from Start
+              </button>
+            }
+          </div>
+
+          <!-- Resume progress bar -->
+          @if (canResume() && item()!.duration) {
+            <div class="mt-3 flex items-center gap-3">
+              <div class="flex-1 max-w-xs h-1 bg-white/10 rounded-full">
+                <div class="h-full bg-accent rounded-full"
+                  [style.width]="progressPercent() + '%'"></div>
+              </div>
+              <span [class]="'text-xs text-white/50 ' + ds.detailFontClass()">
+                {{ formatDuration(item()!.duration! - resumePosition()) }} left
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ── Credits Grid ──────────────────────────────────────────────────── -->
+
+      <!-- Director(s) & Writers -->
+      @if (directors().length || writers().length) {
+        <div class="mt-10 flex items-start gap-10">
+          <!-- Director(s) (large tiles) -->
+          @if (directors().length) {
+            <div>
+              <p [class]="'text-[10px] uppercase tracking-widest text-white/50 mb-3 ' + ds.detailFontClass()">{{ directorLabel() }}</p>
+              <div class="flex flex-wrap gap-4">
+                @for (dir of directors(); track dir.name) {
+                  <app-person-tile [name]="dir.name" [profileUrl]="dir.profileUrl" size="large" />
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Writers (default size, vertically offset) -->
+          @if (writers().length) {
+            <div class="pt-1">
+              <p [class]="'text-[10px] uppercase tracking-widest text-white/50 mb-3 ' + ds.detailFontClass()">{{ writersLabel() }}</p>
+              <div class="flex flex-wrap gap-4">
+                @for (writer of writers(); track writer.name) {
+                  <app-person-tile [name]="writer.name" [subtitle]="writer.job" [profileUrl]="writer.profileUrl" />
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Main Cast -->
+      @if (credits()?.cast?.length) {
+        <div class="mt-10">
+          <p [class]="'text-[10px] uppercase tracking-widest text-white/50 mb-3 ' + ds.detailFontClass()">Main Cast</p>
+          <div class="flex flex-wrap gap-4">
+            @for (actor of credits()!.cast; track actor.name) {
+              <app-person-tile [name]="actor.name" [subtitle]="actor.character" [profileUrl]="actor.profileUrl" />
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Crew (non-writer categories) -->
+      @if (nonWriterCrewCategories().length) {
+        <div class="mt-10">
+          <p [class]="'text-[10px] uppercase tracking-widest text-white/50 mb-3 ' + ds.detailFontClass()">Crew</p>
+          <div class="flex flex-wrap gap-4">
+            @for (cat of nonWriterCrewCategories(); track cat.label) {
+              @for (person of cat.people; track person.name) {
+                <app-person-tile [name]="person.name" [subtitle]="person.job" [profileUrl]="person.profileUrl" />
+              }
+            }
+          </div>
+        </div>
+      }
+
+    } @else {
+      <p class="text-white/60">Item not found.</p>
+    }
+  </div>
+</div>

@@ -1,0 +1,61 @@
+<div class="min-h-screen flex flex-col bg-surface">
+  <!-- Fixed nav -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 to-transparent">
+    <nav class="flex items-center gap-4 px-8 py-4">
+      <button
+        [routerLink]="['/browse']"
+        class="text-xl font-bold tracking-tight text-white select-none flex-shrink-0">
+        cozystream
+      </button>
+
+      <div class="flex-1"></div>
+
+      <!-- Search — only on /browse -->
+      @if (isOnBrowse()) {
+        <input
+          type="text"
+          placeholder="Search..."
+          [ngModel]="searchQuery"
+          (ngModelChange)="onSearchChange($event)"
+          class="bg-white/10 text-white placeholder-white/30 border border-white/10 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-white/30 w-56"
+        />
+      }
+
+      <!-- Manage Collections — only on /browse -->
+      @if (isOnBrowse()) {
+        <button (click)="showCategoryManager.set(true)"
+          title="Manage Collections"
+          class="text-sm text-white/60 hover:text-white transition-colors flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          Collections
+        </button>
+      }
+
+      <!-- Settings link -->
+      <button
+        [routerLink]="['/settings']"
+        class="text-sm text-white/60 hover:text-white transition-colors">
+        Settings
+      </button>
+
+      <!-- Theme toggle -->
+      <button
+        (click)="toggleTheme()"
+        class="text-sm text-white/60 hover:text-white transition-colors">
+        {{ ds.settings().theme === 'dark' ? 'Light' : 'Dark' }} Mode
+      </button>
+    </nav>
+  </header>
+
+  <!-- Page content -->
+  <main class="flex-1 pt-16">
+    <router-outlet />
+  </main>
+</div>
+
+<!-- Collection Manager modal -->
+@if (showCategoryManager()) {
+  <app-collection-manager (closed)="showCategoryManager.set(false)" />
+}

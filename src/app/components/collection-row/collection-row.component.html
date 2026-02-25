@@ -1,0 +1,59 @@
+@if (items.length > 0) {
+  <div style="margin-bottom: var(--row-spacing)">
+    <!-- Heading -->
+    <div class="flex items-center gap-2 mb-3">
+      @if (!collection.isManual) {
+        <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+        </svg>
+      }
+      <h2 class="text-base font-semibold text-white">{{ collection.name }}</h2>
+      <span class="text-xs text-white/30">{{ items.length }} {{ items.length === 1 ? 'film' : 'films' }}</span>
+
+      @if (collection.isManual) {
+        <button (click)="handleDelete()"
+          [title]="confirmDelete() ? 'Click again to confirm' : 'Delete collection'"
+          [class]="'ml-auto text-xs transition-colors ' + (confirmDelete() ? 'text-red-400 hover:text-red-300' : 'text-white/25 hover:text-white/60')">
+          {{ confirmDelete() ? 'Confirm delete?' : 'Delete' }}
+        </button>
+      }
+    </div>
+
+    <!-- Carousel -->
+    <div class="relative">
+      <!-- Left fade + chevron -->
+      @if (canScrollLeft()) {
+        <div class="absolute left-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
+          style="background: linear-gradient(to right, var(--color-surface), transparent)"></div>
+        <button (click)="scroll('left')"
+          class="absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-surface-raised/90 border border-white/10 text-white shadow-lg hover:bg-surface-overlay transition-colors"
+          style="left: -1rem">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+      }
+
+      <div #scrollEl class="flex gap-4 overflow-x-auto pb-1 scrollbar-hide">
+        @for (item of items; track item.id) {
+          <div class="flex-shrink-0" style="width: var(--card-width)">
+            <app-media-card [item]="item" (watchlistToggled)="watchlistToggle.emit($event)" />
+          </div>
+        }
+      </div>
+
+      <!-- Right fade + chevron -->
+      @if (canScrollRight()) {
+        <div class="absolute right-0 top-0 bottom-0 w-16 z-10 pointer-events-none"
+          style="background: linear-gradient(to left, var(--color-surface), transparent)"></div>
+        <button (click)="scroll('right')"
+          class="absolute top-1/2 -translate-y-1/2 z-20 flex items-center justify-center w-8 h-8 rounded-full bg-surface-raised/90 border border-white/10 text-white shadow-lg hover:bg-surface-overlay transition-colors"
+          style="right: -1rem">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      }
+    </div>
+  </div>
+}

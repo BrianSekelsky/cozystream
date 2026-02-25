@@ -1,0 +1,148 @@
+@if (!item()) {
+  <div class="flex items-center justify-center h-64 text-white/40">Loading…</div>
+} @else {
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="flex items-center gap-4 mb-8">
+      <button (click)="router.navigate(['/detail', item()!.id])"
+        class="text-white/50 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <h1 class="text-xl font-semibold text-white">Edit Metadata</h1>
+      @if (saveMsg()) {
+        <span [class]="'text-sm ml-auto ' + (saveMsg()!.includes('fail') ? 'text-red-400' : 'text-green-400')">
+          {{ saveMsg() }}
+        </span>
+      }
+    </div>
+
+    <div class="grid gap-8" style="grid-template-columns: 180px 1fr">
+      <!-- Poster preview -->
+      <div class="flex flex-col gap-3">
+        <div class="aspect-[2/3] bg-surface-overlay rounded overflow-hidden">
+          @if (posterUrl) {
+            <img [src]="posterUrl" [alt]="title" class="w-full h-full object-cover" />
+          } @else {
+            <div class="w-full h-full flex items-center justify-center text-white/20">
+              <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 4v16M17 4v16M3 8h18M3 16h18" />
+              </svg>
+            </div>
+          }
+        </div>
+        @if (item()!.tmdb_id) {
+          <p class="text-[11px] text-white/30 text-center">TMDB #{{ item()!.tmdb_id }}</p>
+        }
+      </div>
+
+      <!-- Form -->
+      <div class="flex flex-col gap-4">
+        <div class="grid gap-3" style="grid-template-columns: 1fr 100px 80px">
+          <label class="flex flex-col gap-1">
+            <span class="text-xs text-white/50 uppercase tracking-wide">Title</span>
+            <input [(ngModel)]="title"
+              class="bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent" />
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-xs text-white/50 uppercase tracking-wide">Year</span>
+            <input [(ngModel)]="year" type="number"
+              class="bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent" />
+          </label>
+          <label class="flex flex-col gap-1">
+            <span class="text-xs text-white/50 uppercase tracking-wide">Rating</span>
+            <input [(ngModel)]="rating" type="number" step="0.1" min="0" max="10"
+              class="bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent" />
+          </label>
+        </div>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-xs text-white/50 uppercase tracking-wide">Genre</span>
+          <input [(ngModel)]="genre"
+            class="bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent" />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-xs text-white/50 uppercase tracking-wide">Description</span>
+          <textarea [(ngModel)]="description" rows="4"
+            class="bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent resize-none"></textarea>
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-xs text-white/50 uppercase tracking-wide">Poster URL</span>
+          <input [(ngModel)]="posterUrl"
+            class="bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent font-mono text-xs" />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="text-xs text-white/50 uppercase tracking-wide">Backdrop URL</span>
+          <input [(ngModel)]="backdropUrl"
+            class="bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent font-mono text-xs" />
+        </label>
+
+        <button (click)="save()" [disabled]="saving()"
+          class="self-start mt-1 bg-accent hover:bg-accent/80 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded transition-colors">
+          {{ saving() ? 'Saving…' : 'Save Changes' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- TMDB Suggestions -->
+    <div class="mt-10 border-t border-white/10 pt-8">
+      <h2 class="text-base font-semibold text-white mb-1">Find a Better Match</h2>
+      <p class="text-sm text-white/40 mb-4">
+        Search TMDB for a different movie and apply its metadata in one click.
+      </p>
+
+      <div class="flex gap-2 mb-5">
+        <input [(ngModel)]="searchQuery" (keydown.enter)="searchSuggestions()"
+          placeholder="Movie title…"
+          class="flex-1 bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white focus:outline-none focus:border-accent" />
+        <input [(ngModel)]="searchYear" (keydown.enter)="searchSuggestions()"
+          placeholder="Year (optional)" type="number"
+          class="w-36 bg-surface-overlay border border-white/10 rounded px-3 py-2 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-accent" />
+        <button (click)="searchSuggestions()" [disabled]="loadingSuggestions() || !searchQuery.trim()"
+          class="bg-white/10 hover:bg-white/15 disabled:opacity-50 text-white text-sm font-medium px-4 py-2 rounded transition-colors">
+          {{ loadingSuggestions() ? 'Searching…' : 'Search' }}
+        </button>
+      </div>
+
+      @if (suggestions().length > 0) {
+        <div class="grid grid-cols-4 gap-4">
+          @for (s of suggestions(); track s.tmdbId) {
+            <div class="flex flex-col gap-2">
+              <div class="aspect-[2/3] bg-surface-overlay rounded overflow-hidden relative group">
+                @if (s.posterUrl) {
+                  <img [src]="s.posterUrl" [alt]="s.title" class="w-full h-full object-cover" />
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center text-white/20">
+                    <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M7 4v16M17 4v16M3 8h18M3 16h18" />
+                    </svg>
+                  </div>
+                }
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                  <button (click)="applySuggestion(s)" [disabled]="applyingId() === s.tmdbId"
+                    class="opacity-0 group-hover:opacity-100 transition-opacity bg-accent hover:bg-accent/80 disabled:opacity-50 text-white text-xs font-medium px-3 py-1.5 rounded">
+                    {{ applyingId() === s.tmdbId ? 'Applying…' : 'Apply' }}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <p class="text-xs font-medium text-white leading-snug line-clamp-2">{{ s.title }}</p>
+                @if (s.year) {
+                  <p class="text-[11px] text-white/40 mt-0.5">{{ s.year }}</p>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (suggestions().length === 0 && !loadingSuggestions()) {
+        <p class="text-sm text-white/30">Enter a title and hit Search to find matches.</p>
+      }
+    </div>
+  </div>
+}

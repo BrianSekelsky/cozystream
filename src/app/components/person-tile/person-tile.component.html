@@ -1,0 +1,15 @@
+<div [class]="'flex-shrink-0 min-w-0 ' + sizeClass()">
+  <div [class]="'overflow-hidden bg-white/10 ' + imgSizeClass() + ' ' + cornerClass()">
+    @if (profileUrl) {
+      <img [src]="profileUrl" [alt]="name" class="w-full h-full object-cover" />
+    } @else {
+      <div class="w-full h-full flex items-center justify-center bg-white/5 text-white/30 text-sm font-medium">
+        {{ initials() }}
+      </div>
+    }
+  </div>
+  <p [class]="'text-white mt-2 leading-tight line-clamp-2 break-words ' + nameSizeClass() + ' ' + ds.titleFontClass()">{{ name }}</p>
+  @if (subtitle) {
+    <p [class]="'text-[10px] text-white/50 mt-0.5 leading-tight line-clamp-2 break-words ' + ds.detailFontClass()">{{ subtitle }}</p>
+  }
+</div>

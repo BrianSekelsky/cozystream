@@ -1,0 +1,72 @@
+<!-- Backdrop -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+  (click)="closed.emit()">
+  <div class="bg-surface-raised border border-white/10 rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl"
+    (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-1">
+      <h2 class="text-base font-semibold text-white">Add to collection</h2>
+      <button (click)="closed.emit()" class="text-white/40 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <p class="text-sm text-white/40 mb-4 truncate">"{{ item.title }}"</p>
+
+    <!-- Collection list -->
+    @if (loading()) {
+      <div class="text-white/40 text-sm py-8 text-center">Loading...</div>
+    } @else {
+      <div class="space-y-1 max-h-64 overflow-y-auto mb-3">
+        @for (col of collections(); track col.id) {
+          <button (click)="toggle(col)"
+            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-left">
+            <div [class]="'w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors ' +
+              (isInCollection(col) ? 'bg-accent border-accent' : 'border-white/30')">
+              @if (isInCollection(col)) {
+                <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              }
+            </div>
+            <span class="text-sm text-white flex-1">{{ col.name }}</span>
+            <span class="text-xs text-white/40 ml-auto flex-shrink-0">
+              {{ col.itemIds.length }} {{ col.itemIds.length === 1 ? 'film' : 'films' }}
+            </span>
+          </button>
+        }
+
+        @if (collections().length === 0 && !creating()) {
+          <p class="text-sm text-white/30 text-center py-6">No collections yet.</p>
+        }
+      </div>
+    }
+
+    <!-- Create new -->
+    @if (creating()) {
+      <div class="flex gap-2 mt-1">
+        <input [(ngModel)]="newName" (keydown.enter)="createCollection()"
+          placeholder="Collection name"
+          class="flex-1 bg-surface-overlay text-white text-sm border border-white/10 rounded-lg px-3 py-1.5 focus:outline-none focus:border-white/30 placeholder-white/30" />
+        <button (click)="createCollection()" [disabled]="!newName.trim()"
+          class="px-3 py-1.5 text-xs bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors disabled:opacity-40">
+          Create
+        </button>
+        <button (click)="creating.set(false); newName = ''"
+          class="px-3 py-1.5 text-xs text-white/50 hover:text-white transition-colors">
+          Cancel
+        </button>
+      </div>
+    } @else {
+      <button (click)="creating.set(true)"
+        class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-white/20 text-sm text-white/50 hover:text-white hover:border-white/40 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        New collection
+      </button>
+    }
+  </div>
+</div>

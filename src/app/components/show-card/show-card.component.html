@@ -1,0 +1,32 @@
+<button (click)="selected.emit(show)" class="group relative flex flex-col text-left focus:outline-none w-full">
+  <!-- Poster -->
+  <div [class]="'relative overflow-hidden w-full aspect-[2/3] ' + posterCornerClass()">
+    @if (show.posterUrl) {
+      <img [src]="show.posterUrl" [alt]="show.name" class="w-full h-full object-cover" />
+    } @else {
+      <div class="w-full h-full bg-white/10 flex items-center justify-center">
+        <svg class="w-10 h-10 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+            d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+        </svg>
+      </div>
+    }
+    <!-- Hover overlay -->
+    <div class="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-200 flex items-center justify-center">
+      <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/20 rounded-full p-3 backdrop-blur-sm">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metadata -->
+  <div class="mt-2 px-0.5">
+    <p class="text-sm font-medium text-white leading-snug line-clamp-2">{{ show.name }}</p>
+    <p class="text-xs text-white/40 mt-0.5">
+      {{ show.seasonCount }} {{ show.seasonCount === 1 ? 'season' : 'seasons' }}
+      · {{ show.episodes.length }} {{ show.episodes.length === 1 ? 'episode' : 'episodes' }}
+    </p>
+  </div>
+</button>

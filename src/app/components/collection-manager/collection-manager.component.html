@@ -1,0 +1,169 @@
+<!-- Backdrop -->
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+  (click)="close()">
+  <!-- Modal -->
+  <div class="bg-surface-raised border border-white/10 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl"
+    (click)="$event.stopPropagation()">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-base font-semibold text-white">Manage Collections</h2>
+      <button (click)="close()" class="text-white/40 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <p class="text-xs text-white/40 mb-4">Drag to reorder. Click a name to rename.</p>
+
+    <!-- Unified list -->
+    <div class="space-y-1 mb-4 max-h-80 overflow-y-auto">
+      @for (id of rows(); track id; let i = $index) {
+        <div draggable="true"
+          (dragstart)="onDragStart(i)"
+          (dragover)="onDragOver($event, i)"
+          (drop)="onDrop(i)"
+          (dragend)="clearDrag()"
+          [class]="'flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors select-none cursor-grab active:cursor-grabbing ' +
+            (dragOverIndex() === i && dragIndex() !== i ? 'bg-white/15 ring-1 ring-white/30' : 'bg-white/5 hover:bg-white/8') +
+            (dragIndex() === i ? ' opacity-40' : '')">
+
+          <!-- Drag handle -->
+          <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <circle cx="8"  cy="5"  r="1.5" />
+            <circle cx="16" cy="5"  r="1.5" />
+            <circle cx="8"  cy="12" r="1.5" />
+            <circle cx="16" cy="12" r="1.5" />
+            <circle cx="8"  cy="19" r="1.5" />
+            <circle cx="16" cy="19" r="1.5" />
+          </svg>
+
+          <!-- Auto-collection icon -->
+          @if (isAuto(id)) {
+            <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+            </svg>
+          }
+
+          <!-- Filter icon -->
+          @if (isFilter(id)) {
+            <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z" />
+            </svg>
+          }
+
+          <!-- Label + subtitle -->
+          <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+            @if (editingId() === id) {
+              <input [(ngModel)]="editingLabel"
+                (blur)="commitEdit(id)"
+                (keydown.enter)="commitEdit(id)"
+                (keydown.escape)="editingId.set(null)"
+                (click)="$event.stopPropagation()"
+                class="flex-1 bg-transparent text-sm font-medium text-white border-b border-white/30 focus:outline-none min-w-0" />
+            } @else {
+              <span class="flex-1 text-sm font-medium text-white truncate cursor-text"
+                title="Click to rename"
+                (click)="startEdit(id, $event)">
+                {{ getLabel(id) }}
+              </span>
+            }
+            @if (getSubtitle(id)) {
+              <p class="text-xs text-white/40 capitalize">{{ getSubtitle(id) }}</p>
+            }
+            @if (getItemCount(id) !== null) {
+              <p class="text-xs text-white/40">{{ getItemCount(id) }} {{ getItemCount(id) === 1 ? 'film' : 'films' }}</p>
+            }
+          </div>
+
+          <!-- Delete -->
+          <button (click)="deleteEntry(id)" title="Remove"
+            class="flex-shrink-0 text-white/25 hover:text-red-400 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      }
+
+      @if (rows().length === 0) {
+        <p class="text-sm text-white/30 text-center py-6">No collections yet.</p>
+      }
+    </div>
+
+    <!-- Hidden collections -->
+    @if (hiddenCollections().length > 0) {
+      <div class="mb-4">
+        <p class="text-xs text-white/40 mb-2">Hidden collections</p>
+        <div class="space-y-1">
+          @for (col of hiddenCollections(); track col.id) {
+            <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-white/5">
+              <svg class="w-4 h-4 text-white/30 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
+              </svg>
+              <span class="flex-1 text-sm text-white/50">{{ col.name }}</span>
+              <button (click)="restoreCollection(col.id)" title="Restore"
+                class="flex-shrink-0 text-white/25 hover:text-green-400 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Add filter collection -->
+    @if (showAddForm()) {
+      <div class="bg-white/5 rounded-xl p-4 border border-white/10 mt-3">
+        <div class="mb-3">
+          <input [(ngModel)]="addLabel" placeholder="Row label (e.g. Horror)"
+            class="w-full bg-surface-overlay text-white text-sm border border-white/10 rounded-lg px-3 py-1.5 focus:outline-none focus:border-white/30 placeholder-white/30" />
+        </div>
+
+        <div class="flex gap-1 mb-3">
+          @for (t of ['genre', 'director', 'decade']; track t) {
+            <button (click)="setAddFilterType(t)"
+              [class]="'flex-1 py-1.5 text-xs rounded-lg capitalize transition-colors ' + (addFilterType === t ? 'bg-accent text-white' : 'bg-surface-overlay text-white/60 hover:text-white')">
+              {{ t }}
+            </button>
+          }
+        </div>
+
+        @if (addFilterType === 'decade') {
+          <select [(ngModel)]="addFilterValue"
+            class="w-full bg-surface-overlay text-white text-sm border border-white/10 rounded-lg px-3 py-1.5 mb-3 focus:outline-none">
+            <option value="">Select a decade</option>
+            @for (d of decades; track d) {
+              <option [value]="d">{{ d }}s</option>
+            }
+          </select>
+        } @else {
+          <input [(ngModel)]="addFilterValue"
+            (keydown.enter)="addFilterCollection()"
+            [placeholder]="addFilterType === 'genre' ? 'e.g. Horror' : 'e.g. Christopher Nolan'"
+            class="w-full bg-surface-overlay text-white text-sm border border-white/10 rounded-lg px-3 py-1.5 mb-3 focus:outline-none focus:border-white/30 placeholder-white/30" />
+        }
+
+        <div class="flex justify-end gap-2">
+          <button (click)="showAddForm.set(false)"
+            class="px-3 py-1.5 text-xs text-white/50 hover:text-white transition-colors">Cancel</button>
+          <button (click)="addFilterCollection()" [disabled]="!addLabel.trim() || !addFilterValue.trim()"
+            class="px-3 py-1.5 text-xs bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors disabled:opacity-40">
+            Add
+          </button>
+        </div>
+      </div>
+    } @else {
+      <button (click)="showAddForm.set(true)"
+        class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-white/20 text-sm text-white/50 hover:text-white hover:border-white/40 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        Add filter collection
+      </button>
+    }
+  </div>
+</div>
