@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { Observable } from 'rxjs'
 import {
-  MediaItem, Collection, WatchProgress, CreditsResult, AppSettings, MovieSuggestion,
+  MediaItem, Collection, WatchProgress, CreditsResult, AppSettings, MovieSuggestion, SeasonPosterOption,
 } from '../models/media.model'
 
 @Injectable({ providedIn: 'root' })
@@ -61,6 +61,14 @@ export class ApiService {
 
   getSeasonPoster(tmdbId: string, seasonNumber: number): Observable<{ posterUrl: string | null }> {
     return this.http.get<{ posterUrl: string | null }>(`${this.base}/tv/${tmdbId}/season/${seasonNumber}/poster`)
+  }
+
+  getSeasonPosters(tmdbId: string, seasonNumber: number): Observable<SeasonPosterOption[]> {
+    return this.http.get<SeasonPosterOption[]>(`${this.base}/tv/${tmdbId}/season/${seasonNumber}/posters`)
+  }
+
+  getMoviePosters(tmdbId: string): Observable<SeasonPosterOption[]> {
+    return this.http.get<SeasonPosterOption[]>(`${this.base}/movie/${tmdbId}/posters`)
   }
 
   // ── Watch progress ──────────────────────────────────────────────────────

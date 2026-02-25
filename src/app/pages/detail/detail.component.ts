@@ -135,6 +135,10 @@ export class DetailComponent implements OnInit {
 
   goBack() { this.location.back() }
 
+  goToEdit() {
+    this.router.navigate(['/edit', this.item()!.id])
+  }
+
   play(fromStart: boolean) {
     const startPosition = fromStart ? 0 : this.resumePosition()
     this.router.navigate(['/player', this.item()!.id], {

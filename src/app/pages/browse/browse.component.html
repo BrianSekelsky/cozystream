@@ -140,9 +140,20 @@
             [season]="season"
             [episodeCount]="(seasonGroups()[season] || []).length"
             [posterUrl]="seasonPoster(season)"
-            (selected)="openSeason($event)" />
+            (selected)="openSeason($event)"
+            (editPoster)="openPosterPicker($event)" />
         }
       </div>
+
+      <!-- Season poster picker modal -->
+      @if (editingSeason() !== null && currentShowTmdbId()) {
+        <app-season-poster-picker
+          [tmdbId]="currentShowTmdbId()!"
+          [seasonNumber]="editingSeason()!"
+          [currentPosterUrl]="seasonPoster(editingSeason()!)"
+          (selected)="handlePosterSelected($event)"
+          (closed)="closePosterPicker()" />
+      }
     }
 
     <!-- ── TV: EPISODES ────────────────────────────────────────────────────── -->

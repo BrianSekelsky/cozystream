@@ -402,6 +402,77 @@ export async function fetchSeasonPoster(
 }
 
 // ---------------------------------------------------------------------------
+// All season posters — returns every poster option for user selection
+// ---------------------------------------------------------------------------
+export interface SeasonPosterOption {
+  url: string
+  language: string | null
+  voteAverage: number
+  voteCount: number
+}
+
+export async function fetchAllSeasonPosters(
+  tmdbId: string,
+  seasonNumber: number
+): Promise<SeasonPosterOption[]> {
+  const client = getClient()
+  if (!client) return []
+  try {
+    const response = await client.seasonImages({
+      id: parseInt(tmdbId),
+      season_number: seasonNumber,
+    })
+    const posters = response.posters ?? []
+
+    const score = (p: typeof posters[0]) =>
+      (p.vote_average ?? 0) * Math.log1p(p.vote_count ?? 0)
+
+    return posters
+      .slice()
+      .sort((a, b) => score(b) - score(a))
+      .map((p) => ({
+        url: imgUrl('w500', p.file_path) ?? '',
+        language: p.iso_639_1 ?? null,
+        voteAverage: p.vote_average ?? 0,
+        voteCount: p.vote_count ?? 0,
+      }))
+      .filter((p) => p.url)
+  } catch {
+    return []
+  }
+}
+
+// ---------------------------------------------------------------------------
+// All movie posters — returns every poster option for user selection
+// ---------------------------------------------------------------------------
+export async function fetchAllMoviePosters(
+  tmdbId: string
+): Promise<SeasonPosterOption[]> {
+  const client = getClient()
+  if (!client) return []
+  try {
+    const response = await client.movieImages({ id: parseInt(tmdbId) })
+    const posters = response.posters ?? []
+
+    const score = (p: typeof posters[0]) =>
+      (p.vote_average ?? 0) * Math.log1p(p.vote_count ?? 0)
+
+    return posters
+      .slice()
+      .sort((a, b) => score(b) - score(a))
+      .map((p) => ({
+        url: imgUrl('w500', p.file_path) ?? '',
+        language: p.iso_639_1 ?? null,
+        voteAverage: p.vote_average ?? 0,
+        voteCount: p.vote_count ?? 0,
+      }))
+      .filter((p) => p.url)
+  } catch {
+    return []
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Strip isolated ALL-CAPS words (3+ chars) that are likely leftover junk.
 // We're conservative: only removes words that are all uppercase, not mixed
 // case, so legitimate title words like "DNA", "AI" aren't affected in practice.

@@ -23,6 +23,8 @@ import {
   fetchMovieMetadataByTmdbId,
   fetchCredits,
   fetchSeasonPoster,
+  fetchAllSeasonPosters,
+  fetchAllMoviePosters,
 } from '../services/metadata'
 import { makeSortTitle } from '../utils/fileUtils'
 
@@ -178,6 +180,25 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     if (!tmdbId || isNaN(season)) return reply.status(400).send({ error: 'invalid params' })
     const posterUrl = await fetchSeasonPoster(tmdbId, season)
     return { posterUrl }
+  })
+
+  // GET /api/tv/:tmdbId/season/:seasonNumber/posters — all available season posters
+  fastify.get<{
+    Params: { tmdbId: string; seasonNumber: string }
+  }>('/tv/:tmdbId/season/:seasonNumber/posters', async (request, reply) => {
+    const { tmdbId, seasonNumber } = request.params
+    const season = parseInt(seasonNumber)
+    if (!tmdbId || isNaN(season)) return reply.status(400).send({ error: 'invalid params' })
+    return fetchAllSeasonPosters(tmdbId, season)
+  })
+
+  // GET /api/movie/:tmdbId/posters — all available movie posters
+  fastify.get<{
+    Params: { tmdbId: string }
+  }>('/movie/:tmdbId/posters', async (request, reply) => {
+    const { tmdbId } = request.params
+    if (!tmdbId) return reply.status(400).send({ error: 'invalid params' })
+    return fetchAllMoviePosters(tmdbId)
   })
 
   // ---------------------------------------------------------------------------

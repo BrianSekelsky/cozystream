@@ -14,8 +14,14 @@ export class SeasonCardComponent {
   @Input({ required: true }) episodeCount!: number
   @Input() posterUrl: string | null = null
   @Output() selected = new EventEmitter<number>()
+  @Output() editPoster = new EventEmitter<number>()
 
   ds = inject(DisplaySettingsService)
+
+  handleEditPoster(event: MouseEvent) {
+    event.stopPropagation()
+    this.editPoster.emit(this.season)
+  }
 
   posterCornerClass(): string {
     const c = this.ds.settings().posterCorners

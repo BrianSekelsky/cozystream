@@ -1,9 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { CommonModule, Location } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { ApiService } from '../../services/api.service'
-import { MediaItem, MovieSuggestion } from '../../models/media.model'
+import { MediaItem, MovieSuggestion, SeasonPosterOption } from '../../models/media.model'
 
 @Component({
   selector: 'app-edit',
@@ -14,6 +14,7 @@ import { MediaItem, MovieSuggestion } from '../../models/media.model'
 export class EditComponent implements OnInit {
   private route = inject(ActivatedRoute)
   router = inject(Router)
+  private location = inject(Location)
   private api = inject(ApiService)
 
   item = signal<MediaItem | null>(null)
@@ -36,6 +37,11 @@ export class EditComponent implements OnInit {
   loadingSuggestions = signal(false)
   applyingId = signal<string | null>(null)
 
+  // Poster picker
+  showPosterPicker = signal(false)
+  posterOptions = signal<SeasonPosterOption[]>([])
+  loadingPosters = signal(false)
+
   private itemId = 0
 
   ngOnInit() {
@@ -57,7 +63,7 @@ export class EditComponent implements OnInit {
     })
   }
 
-  goBack() { this.router.navigate([-1]) }
+  goBack() { this.location.back() }
 
   save() {
     this.saving.set(true)
@@ -96,6 +102,41 @@ export class EditComponent implements OnInit {
       },
       error: () => this.loadingSuggestions.set(false),
     })
+  }
+
+  openPosterPicker() {
+    const tmdbId = this.item()?.tmdb_id
+    if (!tmdbId) return
+    this.showPosterPicker.set(true)
+    this.loadingPosters.set(true)
+    this.posterOptions.set([])
+    this.api.getMoviePosters(tmdbId).subscribe({
+      next: (results) => {
+        this.posterOptions.set(results)
+        this.loadingPosters.set(false)
+      },
+      error: () => this.loadingPosters.set(false),
+    })
+  }
+
+  closePosterPicker() {
+    this.showPosterPicker.set(false)
+  }
+
+  selectPoster(url: string) {
+    this.posterUrl = url
+    this.showPosterPicker.set(false)
+  }
+
+  posterPickerBackdropClick(event: MouseEvent) {
+    if (event.target === event.currentTarget) {
+      this.showPosterPicker.set(false)
+    }
+  }
+
+  posterLangLabel(lang: string | null): string {
+    if (!lang || lang === 'en') return ''
+    return lang.toUpperCase()
   }
 
   applySuggestion(s: MovieSuggestion) {

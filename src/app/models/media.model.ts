@@ -69,6 +69,13 @@ export interface MovieSuggestion {
   description: string | null
 }
 
+export interface SeasonPosterOption {
+  url: string
+  language: string | null
+  voteAverage: number
+  voteCount: number
+}
+
 export interface ShowGroup {
   sortTitle: string
   name: string

@@ -13,6 +13,7 @@ import { FilterRowComponent } from '../../components/filter-row/filter-row.compo
 import { ShowCardComponent } from '../../components/show-card/show-card.component'
 import { SeasonCardComponent } from '../../components/season-card/season-card.component'
 import { EpisodeRowComponent } from '../../components/episode-row/episode-row.component'
+import { SeasonPosterPickerComponent } from '../../components/season-poster-picker/season-poster-picker.component'
 import { MediaItem, Collection, ShowGroup } from '../../models/media.model'
 
 // ─── TV helpers ──────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ type TvView = 'shows' | 'seasons' | 'episodes'
   imports: [
     CommonModule, FormsModule,
     MediaCardComponent, CollectionRowComponent, FilterRowComponent,
-    ShowCardComponent, SeasonCardComponent, EpisodeRowComponent,
+    ShowCardComponent, SeasonCardComponent, EpisodeRowComponent, SeasonPosterPickerComponent,
   ],
   templateUrl: './browse.component.html',
 })
@@ -62,7 +63,9 @@ export class BrowseComponent implements OnInit, OnDestroy {
   selectedShow = signal<ShowGroup | null>(null)
   selectedSeason = signal<number | null>(null)
   seasonPosters = signal<Record<number, string | null>>({})
+  editingSeason = signal<number | null>(null)
 
+  private static OVERRIDES_KEY = 'cozystream:season-poster-overrides'
   private queryParamSub?: Subscription
 
   watchlistItems = computed(() => this.allItems().filter((i) => i.in_watchlist === 1))
@@ -181,7 +184,13 @@ export class BrowseComponent implements OnInit, OnDestroy {
     this.selectedShow.set(show)
     this.tvView.set('seasons')
     this.selectedSeason.set(null)
-    this.seasonPosters.set({})
+    this.editingSeason.set(null)
+
+    // Load localStorage overrides first so they display immediately
+    const tmdbId = show.episodes[0]?.tmdb_id
+    const overrides = tmdbId ? this.loadOverrides(tmdbId) : {}
+    this.seasonPosters.set(overrides)
+
     this.router.navigate(['/browse'], { queryParams: {}, replaceUrl: true })
     this.loadSeasonPosters(show)
   }
@@ -189,8 +198,11 @@ export class BrowseComponent implements OnInit, OnDestroy {
   private loadSeasonPosters(show: ShowGroup) {
     const tmdbId = show.episodes[0]?.tmdb_id
     if (!tmdbId) return
+    const overrides = this.loadOverrides(tmdbId)
     const seasons = new Set(show.episodes.map((e) => extractSeason(e.title)))
     for (const season of seasons) {
+      // Skip TMDB fetch for seasons that have a user override
+      if (overrides[season]) continue
       this.api.getSeasonPoster(tmdbId, season).subscribe({
         next: (res) => {
           if (res.posterUrl) {
@@ -231,5 +243,51 @@ export class BrowseComponent implements OnInit, OnDestroy {
 
   handleCollectionDeleted(id: string) {
     this.collectionsService.removeCollection(id)
+  }
+
+  // ── Season poster picker ──────────────────────────────────────────────
+
+  openPosterPicker(season: number) {
+    this.editingSeason.set(season)
+  }
+
+  closePosterPicker() {
+    this.editingSeason.set(null)
+  }
+
+  handlePosterSelected(url: string) {
+    const season = this.editingSeason()
+    if (season === null) return
+    const tmdbId = this.selectedShow()?.episodes[0]?.tmdb_id
+    this.seasonPosters.update((prev) => ({ ...prev, [season]: url }))
+    this.editingSeason.set(null)
+    if (tmdbId) this.saveOverride(tmdbId, season, url)
+  }
+
+  currentShowTmdbId(): string | null {
+    return this.selectedShow()?.episodes[0]?.tmdb_id ?? null
+  }
+
+  // ── localStorage overrides ────────────────────────────────────────────
+
+  private loadOverrides(tmdbId: string): Record<number, string> {
+    try {
+      const raw = localStorage.getItem(BrowseComponent.OVERRIDES_KEY)
+      if (!raw) return {}
+      const all = JSON.parse(raw) as Record<string, Record<number, string>>
+      return all[tmdbId] ?? {}
+    } catch {
+      return {}
+    }
+  }
+
+  private saveOverride(tmdbId: string, season: number, url: string) {
+    try {
+      const raw = localStorage.getItem(BrowseComponent.OVERRIDES_KEY)
+      const all: Record<string, Record<number, string>> = raw ? JSON.parse(raw) : {}
+      if (!all[tmdbId]) all[tmdbId] = {}
+      all[tmdbId][season] = url
+      localStorage.setItem(BrowseComponent.OVERRIDES_KEY, JSON.stringify(all))
+    } catch { /* ignore */ }
   }
 }
