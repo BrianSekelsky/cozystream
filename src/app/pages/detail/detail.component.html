@@ -8,10 +8,17 @@
         <div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface/70 to-surface"></div>
       }
     </div>
+  <!-- Poster Header -->
   } @else if (ds.settings().detailLayout === 'poster-header' && item()?.backdrop_url) {
-    <div class="-mt-16 h-[35vh] overflow-hidden pointer-events-none">
-      <img [src]="item()!.backdrop_url!" alt=""
-        [class]="'w-full h-full object-cover object-[center_20%] ' + backdropBlurClass()" />
+    <div class="pt-4 px-8 lg:px-16 xl:px-24 pointer-events-none">
+      <div class="relative max-w-6xl mx-auto h-[35vh] rounded-xl overflow-hidden">
+        <img [src]="item()!.backdrop_url!" alt=""
+          [class]="'w-full h-full object-cover object-[center_20%] ' + backdropBlurClass()" />
+        <!-- Fade edges to background -->
+        <div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-surface/50"></div>
+        <div class="absolute inset-0 bg-gradient-to-r from-surface/60 via-transparent to-surface/60"></div>
+        <div class="absolute inset-0"></div>
+      </div>
     </div>
   }
 
