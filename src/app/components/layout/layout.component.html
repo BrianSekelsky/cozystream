@@ -33,12 +33,14 @@
         </button>
       }
 
-      <!-- Settings link -->
-      <button
-        [routerLink]="['/settings']"
-        class="text-sm text-white/60 hover:text-white transition-colors">
-        Settings
-      </button>
+      <!-- Settings link (admin only) -->
+      @if (auth.isAdmin()) {
+        <button
+          [routerLink]="['/settings']"
+          class="text-sm text-white/60 hover:text-white transition-colors">
+          Settings
+        </button>
+      }
 
       <!-- Theme toggle -->
       <button
@@ -46,6 +48,16 @@
         class="text-sm text-white/60 hover:text-white transition-colors">
         {{ ds.settings().theme === 'dark' ? 'Light' : 'Dark' }} Mode
       </button>
+
+      <!-- User info & logout -->
+      @if (auth.user(); as u) {
+        <span class="text-sm text-white/50">{{ u.displayName }}</span>
+        <button
+          (click)="auth.logout()"
+          class="text-sm text-white/40 hover:text-white/70 transition-colors">
+          Log Out
+        </button>
+      }
     </nav>
   </header>
 

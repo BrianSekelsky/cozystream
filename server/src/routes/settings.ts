@@ -13,7 +13,10 @@ interface SettingsBody {
   tmdb_api_key?: string
 }
 
+import { requireAdmin } from '../middleware/auth'
+
 export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
+  fastify.addHook('preHandler', requireAdmin(fastify))
   // GET /api/settings/pick-folder — opens a native OS folder picker dialog
   fastify.get('/settings/pick-folder', async (_request, reply) => {
     const platform = os.platform()

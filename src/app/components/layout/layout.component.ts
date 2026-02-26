@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { filter } from 'rxjs/operators'
 import { DisplaySettingsService } from '../../services/display-settings.service'
+import { AuthService } from '../../services/auth.service'
 import { CollectionManagerComponent } from '../collection-manager/collection-manager.component'
 
 @Component({
@@ -14,6 +15,7 @@ import { CollectionManagerComponent } from '../collection-manager/collection-man
 })
 export class LayoutComponent {
   ds = inject(DisplaySettingsService)
+  auth = inject(AuthService)
   private router = inject(Router)
 
   searchQuery = ''

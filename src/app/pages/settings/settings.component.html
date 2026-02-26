@@ -16,6 +16,15 @@
         {{ tab.label }}
       </button>
     }
+    @if (auth.isAdmin()) {
+      <button (click)="activeTab.set('users'); loadUsersTab()"
+        [class]="'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ' +
+          (activeTab() === 'users'
+            ? 'border-accent text-white'
+            : 'border-transparent text-white/50 hover:text-white/80')">
+        Users
+      </button>
+    }
   </div>
 
   <!-- ═══ Setup Tab ═══ -->
@@ -338,5 +347,81 @@
         </div>
       </div>
     </div>
+  }
+
+  <!-- ═══ Users Tab (admin only) ═══ -->
+  @if (activeTab() === 'users') {
+
+    <!-- Invite Codes -->
+    <section class="mb-10">
+      <h2 class="text-base font-semibold mb-1 text-white">Invite Codes</h2>
+      <p class="text-sm text-white/50 mb-4">Generate codes to invite others to your server.</p>
+
+      <button (click)="generateInviteCode()" [disabled]="generatingCode()"
+        class="px-4 py-2.5 bg-accent hover:bg-accent-hover disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors mb-4">
+        {{ generatingCode() ? 'Generating...' : 'Generate Invite Code' }}
+      </button>
+
+      @if (newlyGeneratedCode()) {
+        <div class="flex items-center gap-3 bg-green-500/10 border border-green-500/20 rounded-lg px-4 py-3 mb-4">
+          <span class="text-sm font-mono text-green-400">{{ newlyGeneratedCode() }}</span>
+          <button (click)="copyToClipboard(newlyGeneratedCode())"
+            class="text-xs text-white/50 hover:text-white transition-colors">
+            Copy
+          </button>
+        </div>
+      }
+
+      <div class="space-y-2">
+        @for (code of inviteCodes(); track code.code) {
+          <div class="flex items-center justify-between bg-surface-overlay rounded-lg px-4 py-2.5">
+            <div class="flex items-center gap-3">
+              <span class="text-sm font-mono text-white/80">{{ code.code }}</span>
+              @if (code.used_by) {
+                <span class="text-xs text-white/30">Used</span>
+              } @else {
+                <span class="text-xs text-green-400/60">Available</span>
+              }
+            </div>
+            @if (!code.used_by) {
+              <div class="flex items-center gap-2">
+                <button (click)="copyToClipboard(code.code)"
+                  class="text-xs text-white/40 hover:text-white/70 transition-colors">
+                  Copy
+                </button>
+                <button (click)="deleteInviteCode(code.code)"
+                  class="text-xs text-red-400/60 hover:text-red-400 transition-colors">
+                  Delete
+                </button>
+              </div>
+            }
+          </div>
+        } @empty {
+          <p class="text-sm text-white/30 italic">No invite codes generated yet.</p>
+        }
+      </div>
+    </section>
+
+    <!-- Registered Users -->
+    <section>
+      <h2 class="text-base font-semibold mb-1 text-white">Registered Users</h2>
+      <p class="text-sm text-white/50 mb-4">Users with access to your server.</p>
+
+      <div class="space-y-2">
+        @for (u of users(); track u.id) {
+          <div class="flex items-center justify-between bg-surface-overlay rounded-lg px-4 py-3">
+            <div>
+              <p class="text-sm text-white font-medium">{{ u.displayName }}</p>
+              <p class="text-xs text-white/40">{{ u.username }}</p>
+            </div>
+            <span [class]="'text-xs px-2 py-0.5 rounded-full ' + (u.role === 'admin' ? 'bg-accent/20 text-accent' : 'bg-white/10 text-white/50')">
+              {{ u.role }}
+            </span>
+          </div>
+        } @empty {
+          <p class="text-sm text-white/30 italic">No users registered yet.</p>
+        }
+      </div>
+    </section>
   }
 </div>

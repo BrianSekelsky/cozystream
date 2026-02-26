@@ -2,14 +2,14 @@ import { FastifyInstance } from 'fastify'
 import path from 'path'
 import {
   getAllMediaItems,
+  getAllMediaItemsForUser,
   getMediaItemById,
+  getMediaItemByIdForUser,
   getRecentlyAdded,
   getContinueWatching,
   getWatchProgress,
   upsertWatchProgress,
   updateMediaItem,
-  toggleFavorite,
-  toggleWatchlist,
   getAllManualCollections,
   createCollection,
   deleteCollection,
@@ -17,6 +17,8 @@ import {
   addItemToCollection,
   removeItemFromCollection,
 } from '../db/queries'
+import { toggleUserFavorite, toggleUserWatchlist } from '../db/auth-queries'
+import { requireAuth } from '../middleware/auth'
 import { scanLibrary, isScanInProgress, getLibraryPaths } from '../services/scanner'
 import {
   searchMovieSuggestions,
@@ -29,10 +31,12 @@ import {
 import { makeSortTitle } from '../utils/fileUtils'
 
 export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
+  fastify.addHook('preHandler', requireAuth(fastify))
   // GET /api/library - all items with optional type filter
   fastify.get<{ Querystring: { type?: string } }>('/library', async (request) => {
     const { type } = request.query
-    const items = getAllMediaItems()
+    const userId = (request.user as any).id
+    const items = getAllMediaItemsForUser(userId)
     if (type) return items.filter((i) => i.type === type)
     return items
   })
@@ -43,14 +47,16 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   })
 
   // GET /api/library/continue
-  fastify.get('/library/continue', async () => {
-    return getContinueWatching()
+  fastify.get('/library/continue', async (request) => {
+    const userId = (request.user as any).id
+    return getContinueWatching(userId)
   })
 
   // GET /api/library/:id
   fastify.get<{ Params: { id: string } }>('/library/:id', async (request, reply) => {
     const id = parseInt(request.params.id)
-    const item = getMediaItemById(id)
+    const userId = (request.user as any).id
+    const item = getMediaItemByIdForUser(id, userId)
     if (!item) return reply.status(404).send({ error: 'Not found' })
     return item
   })
@@ -72,7 +78,8 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   // GET /api/library/:id/progress
   fastify.get<{ Params: { id: string } }>('/library/:id/progress', async (request) => {
     const id = parseInt(request.params.id)
-    return getWatchProgress(id) ?? { position_seconds: 0, completed: false }
+    const userId = (request.user as any).id
+    return getWatchProgress(id, userId) ?? { position_seconds: 0, completed: false }
   })
 
   // POST /api/library/:id/progress
@@ -81,8 +88,9 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     Body: { position_seconds: number; completed?: boolean }
   }>('/library/:id/progress', async (request) => {
     const id = parseInt(request.params.id)
+    const userId = (request.user as any).id
     const { position_seconds, completed = false } = request.body
-    upsertWatchProgress(id, position_seconds, completed)
+    upsertWatchProgress(id, position_seconds, completed, userId)
     return { ok: true }
   })
 
@@ -103,21 +111,23 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     return getMediaItemById(id)
   })
 
-  // POST /api/library/:id/favorite — toggle favorite flag
+  // POST /api/library/:id/favorite — toggle favorite flag (per-user)
   fastify.post<{ Params: { id: string } }>('/library/:id/favorite', async (request, reply) => {
     const id = parseInt(request.params.id)
+    const userId = (request.user as any).id
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
-    const isFav = toggleFavorite(id)
+    const isFav = toggleUserFavorite(userId, id)
     return { is_favorite: isFav }
   })
 
-  // POST /api/library/:id/watchlist — toggle watchlist flag
+  // POST /api/library/:id/watchlist — toggle watchlist flag (per-user)
   fastify.post<{ Params: { id: string } }>('/library/:id/watchlist', async (request, reply) => {
     const id = parseInt(request.params.id)
+    const userId = (request.user as any).id
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
-    const inWatchlist = toggleWatchlist(id)
+    const inWatchlist = toggleUserWatchlist(userId, id)
     return { in_watchlist: inWatchlist }
   })
 

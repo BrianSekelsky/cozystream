@@ -83,6 +83,37 @@ export function initDB(): void {
       media_item_id INTEGER NOT NULL REFERENCES media_items(id) ON DELETE CASCADE,
       PRIMARY KEY (collection_id, media_item_id)
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      username      TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      display_name  TEXT NOT NULL,
+      role          TEXT NOT NULL DEFAULT 'member' CHECK(role IN ('admin', 'member')),
+      created_at    TEXT DEFAULT (datetime('now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS invite_codes (
+      code       TEXT PRIMARY KEY,
+      created_by INTEGER NOT NULL REFERENCES users(id),
+      used_by    INTEGER REFERENCES users(id),
+      created_at TEXT DEFAULT (datetime('now')),
+      used_at    TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS user_favorites (
+      user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      media_item_id INTEGER NOT NULL REFERENCES media_items(id) ON DELETE CASCADE,
+      created_at    TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, media_item_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS user_watchlist (
+      user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      media_item_id INTEGER NOT NULL REFERENCES media_items(id) ON DELETE CASCADE,
+      created_at    TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, media_item_id)
+    );
   `)
 
   // Migrations: add columns to existing databases

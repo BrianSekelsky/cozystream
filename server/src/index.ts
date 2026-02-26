@@ -1,11 +1,14 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import jwt from '@fastify/jwt'
+import * as crypto from 'crypto'
 import { initDB, getDB } from './db/schema'
 import { libraryRoutes } from './routes/library'
 import { streamingRoutes } from './routes/streaming'
 import { settingsRoutes } from './routes/settings'
-import { getSetting } from './db/queries'
+import { authRoutes } from './routes/auth'
+import { getSetting, setSetting } from './db/queries'
 import { scanLibrary } from './services/scanner'
 import { cleanupAllSessions } from './services/transcoder'
 
@@ -31,6 +34,14 @@ async function main(): Promise<void> {
   initDB()
   console.log('[db] Database initialized')
 
+  // Set up JWT with a persisted secret
+  let jwtSecret = getSetting('jwt_secret')
+  if (!jwtSecret) {
+    jwtSecret = crypto.randomBytes(32).toString('hex')
+    setSetting('jwt_secret', jwtSecret)
+  }
+  await server.register(jwt, { secret: jwtSecret })
+
   // Restore TMDB API key from DB if not in env
   const storedKey = getSetting('tmdb_api_key')
   if (storedKey && !process.env.TMDB_API_KEY) {
@@ -39,6 +50,7 @@ async function main(): Promise<void> {
   }
 
   // Register routes
+  await server.register(authRoutes, { prefix: '/api' })
   await server.register(libraryRoutes, { prefix: '/api' })
   await server.register(streamingRoutes, { prefix: '/api' })
   await server.register(settingsRoutes, { prefix: '/api' })

@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { ApiService } from '../../services/api.service'
 import { DisplaySettingsService } from '../../services/display-settings.service'
+import { AuthService } from '../../services/auth.service'
 import { AppSettings, ColorScheme } from '../../models/media.model'
 import { checkContrast, suggestBetterColors, ContrastResult } from '../../utils/color.utils'
+import type { User, InviteCode } from '../../models/auth.model'
 
 const COLOR_SCHEME_OPTIONS: { value: ColorScheme; label: string; darkBg: string; lightBg: string }[] = [
   { value: 'default',  label: 'Default',  darkBg: 'rgb(10 10 10)',   lightBg: 'rgb(245 245 245)' },
@@ -34,6 +36,7 @@ const ACCENT_COLORS = [
 })
 export class SettingsComponent implements OnInit {
   ds = inject(DisplaySettingsService)
+  auth = inject(AuthService)
   private api = inject(ApiService)
 
   colorSchemeOptions = COLOR_SCHEME_OPTIONS
@@ -75,7 +78,7 @@ export class SettingsComponent implements OnInit {
   message = signal('')
   messageType = signal<'success' | 'error'>('success')
   manualPath = ''
-  activeTab = signal<'setup' | 'layout' | 'appearance'>('setup')
+  activeTab = signal<'setup' | 'layout' | 'appearance' | 'users'>('setup')
   contrastInfo = signal<ContrastResult | null>(null)
   colorSuggestions = signal<string[]>([])
 
@@ -196,5 +199,49 @@ export class SettingsComponent implements OnInit {
         this.saving.set(false)
       },
     })
+  }
+
+  // --- Users tab (admin only) ---
+  inviteCodes = signal<InviteCode[]>([])
+  users = signal<User[]>([])
+  generatingCode = signal(false)
+  newlyGeneratedCode = signal('')
+
+  loadUsersTab() {
+    this.auth.getInviteCodes().subscribe({
+      next: (codes) => this.inviteCodes.set(codes),
+    })
+    this.auth.getUsers().subscribe({
+      next: (users) => this.users.set(users),
+    })
+  }
+
+  generateInviteCode() {
+    this.generatingCode.set(true)
+    this.newlyGeneratedCode.set('')
+    this.auth.createInviteCode().subscribe({
+      next: (res) => {
+        this.newlyGeneratedCode.set(res.code)
+        this.generatingCode.set(false)
+        this.auth.getInviteCodes().subscribe({
+          next: (codes) => this.inviteCodes.set(codes),
+        })
+      },
+      error: () => {
+        this.generatingCode.set(false)
+      },
+    })
+  }
+
+  deleteInviteCode(code: string) {
+    this.auth.deleteInviteCode(code).subscribe({
+      next: () => {
+        this.inviteCodes.update((codes) => codes.filter((c) => c.code !== code))
+      },
+    })
+  }
+
+  copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
   }
 }

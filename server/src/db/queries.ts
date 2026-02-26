@@ -73,10 +73,38 @@ export function getAllMediaItems(): MediaItem[] {
     .all() as MediaItem[]
 }
 
+export function getAllMediaItemsForUser(userId: number): MediaItem[] {
+  return getDB()
+    .prepare(`
+      SELECT m.*,
+        CASE WHEN uf.user_id IS NOT NULL THEN 1 ELSE 0 END as is_favorite,
+        CASE WHEN uw.user_id IS NOT NULL THEN 1 ELSE 0 END as in_watchlist
+      FROM media_items m
+      LEFT JOIN user_favorites uf ON m.id = uf.media_item_id AND uf.user_id = ?
+      LEFT JOIN user_watchlist uw ON m.id = uw.media_item_id AND uw.user_id = ?
+      ORDER BY m.sort_title ASC, m.title ASC
+    `)
+    .all(userId, userId) as MediaItem[]
+}
+
 export function getMediaItemById(id: number): MediaItem | undefined {
   return getDB()
     .prepare('SELECT * FROM media_items WHERE id = ?')
     .get(id) as MediaItem | undefined
+}
+
+export function getMediaItemByIdForUser(id: number, userId: number): MediaItem | undefined {
+  return getDB()
+    .prepare(`
+      SELECT m.*,
+        CASE WHEN uf.user_id IS NOT NULL THEN 1 ELSE 0 END as is_favorite,
+        CASE WHEN uw.user_id IS NOT NULL THEN 1 ELSE 0 END as in_watchlist
+      FROM media_items m
+      LEFT JOIN user_favorites uf ON m.id = uf.media_item_id AND uf.user_id = ?
+      LEFT JOIN user_watchlist uw ON m.id = uw.media_item_id AND uw.user_id = ?
+      WHERE m.id = ?
+    `)
+    .get(userId, userId, id) as MediaItem | undefined
 }
 
 export function getRecentlyAdded(limit = 20): MediaItem[] {

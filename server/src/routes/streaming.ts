@@ -31,7 +31,10 @@ function canDirectPlay(probe: ProbeResult | null): boolean {
 // Text-based subtitle codecs that can be extracted to WebVTT
 const TEXT_SUB_CODECS = new Set(['subrip', 'srt', 'ass', 'ssa', 'webvtt', 'mov_text'])
 
+import { requireAuth } from '../middleware/auth'
+
 export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
+  fastify.addHook('preHandler', requireAuth(fastify))
 
   // ── GET /api/stream/:id — Direct-play via HTTP range requests ───────
 

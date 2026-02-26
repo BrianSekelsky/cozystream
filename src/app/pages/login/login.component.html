@@ -1,0 +1,56 @@
+<div class="min-h-screen flex items-center justify-center bg-surface px-4">
+  <div class="w-full max-w-sm">
+    <h1 class="text-2xl font-bold text-white mb-1 text-center">cozystream</h1>
+    <p class="text-white/40 text-sm text-center mb-8">Sign in to your account</p>
+
+    @if (error()) {
+      <div class="bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">
+        {{ error() }}
+      </div>
+    }
+
+    <form (ngSubmit)="login()" class="space-y-4">
+      <div>
+        <label for="username" class="block text-sm text-white/60 mb-1">Username</label>
+        <input
+          id="username"
+          type="text"
+          [(ngModel)]="username"
+          name="username"
+          autocomplete="username"
+          class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+          placeholder="Enter username"
+        />
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm text-white/60 mb-1">Password</label>
+        <input
+          id="password"
+          type="password"
+          [(ngModel)]="password"
+          name="password"
+          autocomplete="current-password"
+          class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:border-white/30"
+          placeholder="Enter password"
+        />
+      </div>
+
+      <button
+        type="submit"
+        [disabled]="loading() || !username || !password"
+        class="w-full bg-accent hover:bg-accent-hover text-white font-medium rounded-lg px-4 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        @if (loading()) {
+          Signing in...
+        } @else {
+          Sign In
+        }
+      </button>
+    </form>
+
+    <p class="text-center text-sm text-white/40 mt-6">
+      Don't have an account?
+      <a routerLink="/register" class="text-accent hover:underline">Register</a>
+    </p>
+  </div>
+</div>
