@@ -65,6 +65,8 @@ export function getOrCreateSession(
 
   const outputOptions = [
     '-c:v libx264',
+    '-profile:v high',
+    '-pix_fmt yuv420p',
     '-preset veryfast',
     '-crf 23',
     '-c:a aac',

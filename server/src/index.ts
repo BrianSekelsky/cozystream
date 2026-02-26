@@ -40,7 +40,20 @@ async function main(): Promise<void> {
     jwtSecret = crypto.randomBytes(32).toString('hex')
     setSetting('jwt_secret', jwtSecret)
   }
-  await server.register(jwt, { secret: jwtSecret })
+  await server.register(jwt, {
+    secret: jwtSecret,
+    verify: {
+      extractToken: (request) => {
+        // 1. Authorization header (used by HttpClient interceptor, HLS.js)
+        const auth = request.headers.authorization
+        if (auth?.startsWith('Bearer ')) return auth.slice(7)
+        // 2. Cookie fallback (used by <video src=""> which can't set headers)
+        const cookie = request.headers.cookie ?? ''
+        const match = cookie.match(/(?:^|;\s*)cozystream_token=([^;]+)/)
+        return match?.[1]
+      },
+    },
+  })
 
   // Restore TMDB API key from DB if not in env
   const storedKey = getSetting('tmdb_api_key')

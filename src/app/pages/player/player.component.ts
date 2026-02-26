@@ -5,6 +5,7 @@ import {
 import { ActivatedRoute, Router } from '@angular/router'
 import { Location, CommonModule } from '@angular/common'
 import { ApiService } from '../../services/api.service'
+import { AuthService } from '../../services/auth.service'
 import { DisplaySettingsService } from '../../services/display-settings.service'
 import { StreamInfo, PlayerSubtitleTrack } from '../../models/media.model'
 import Hls from 'hls.js'
@@ -23,6 +24,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
   private router = inject(Router)
   private location = inject(Location)
   private api = inject(ApiService)
+  private auth = inject(AuthService)
   ds = inject(DisplaySettingsService)
 
   // ── Stream state ────────────────────────────────────────────────────────
@@ -173,7 +175,14 @@ export class PlayerComponent implements OnInit, OnDestroy {
         return
       }
 
-      this.hls = new Hls()
+      const token = this.auth.getToken()
+      this.hls = new Hls({
+        xhrSetup: (xhr) => {
+          if (token) {
+            xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+          }
+        },
+      })
 
       const hlsUrl = `/api/stream/${this.mediaId}/hls?start=${this.startPosition}`
       this.hls.loadSource(hlsUrl)
@@ -185,6 +194,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
       })
 
       this.hls.on(Hls.Events.ERROR, (_event, data) => {
+        console.error('[hls] Error:', data.type, data.details, data.fatal ? '(fatal)' : '', data)
         if (data.fatal) {
           this.unsupported.set(true)
           this.loading.set(false)
@@ -383,7 +393,11 @@ export class PlayerComponent implements OnInit, OnDestroy {
 
     // Fetch the VTT content and create a blob URL
     // (avoids cross-origin issues with <track> element src)
-    fetch(this.api.subtitleUrl(this.mediaId, trackIndex))
+    const subToken = this.auth.getToken()
+    const subUrl = this.api.subtitleUrl(this.mediaId, trackIndex)
+    const headers: Record<string, string> = {}
+    if (subToken) headers['Authorization'] = `Bearer ${subToken}`
+    fetch(subUrl, { headers })
       .then(res => {
         if (!res.ok) throw new Error(`Subtitle fetch failed: ${res.status}`)
         return res.text()

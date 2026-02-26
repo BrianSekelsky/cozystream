@@ -22,6 +22,11 @@ export class AuthService {
   readonly isAdmin = computed(() => this._user()?.role === 'admin')
 
   constructor() {
+    // Sync the cookie with the stored token so <video src=""> requests are authenticated
+    const token = this._token()
+    if (token) {
+      document.cookie = `cozystream_token=${token}; path=/; SameSite=Strict`
+    }
     this.validateToken()
   }
 
@@ -76,6 +81,7 @@ export class AuthService {
     this._user.set(null)
     localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
+    document.cookie = 'cozystream_token=; path=/; max-age=0'
     this.router.navigate(['/login'])
   }
 
@@ -110,6 +116,8 @@ export class AuthService {
     this._user.set(response.user)
     localStorage.setItem(TOKEN_KEY, response.token)
     localStorage.setItem(USER_KEY, JSON.stringify(response.user))
+    // Set a cookie so <video src=""> requests include the token
+    document.cookie = `cozystream_token=${response.token}; path=/; SameSite=Strict`
   }
 
   private loadToken(): string | null {
