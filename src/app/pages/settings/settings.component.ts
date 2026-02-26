@@ -3,8 +3,17 @@ import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { ApiService } from '../../services/api.service'
 import { DisplaySettingsService } from '../../services/display-settings.service'
-import { AppSettings } from '../../models/media.model'
+import { AppSettings, ColorScheme } from '../../models/media.model'
 import { checkContrast, suggestBetterColors, ContrastResult } from '../../utils/color.utils'
+
+const COLOR_SCHEME_OPTIONS: { value: ColorScheme; label: string; darkBg: string; lightBg: string }[] = [
+  { value: 'default',  label: 'Default',  darkBg: 'rgb(10 10 10)',   lightBg: 'rgb(245 245 245)' },
+  { value: 'midnight', label: 'Midnight', darkBg: 'rgb(12 14 26)',   lightBg: 'rgb(238 241 248)' },
+  { value: 'ember',    label: 'Ember',    darkBg: 'rgb(18 16 12)',   lightBg: 'rgb(250 246 240)' },
+  { value: 'forest',   label: 'Forest',   darkBg: 'rgb(10 14 10)',   lightBg: 'rgb(240 245 240)' },
+  { value: 'rose',     label: 'Rose',     darkBg: 'rgb(18 12 14)',   lightBg: 'rgb(248 240 242)' },
+  { value: 'slate',    label: 'Slate',    darkBg: 'rgb(16 18 20)',   lightBg: 'rgb(240 242 244)' },
+]
 
 const ACCENT_COLORS = [
   { label: 'Red',    color: '#e50914' },
@@ -27,6 +36,7 @@ export class SettingsComponent implements OnInit {
   ds = inject(DisplaySettingsService)
   private api = inject(ApiService)
 
+  colorSchemeOptions = COLOR_SCHEME_OPTIONS
   accentColors = ACCENT_COLORS
   fontOptions = [
     { value: 'sans' as const, label: 'Sans-serif' },
@@ -144,6 +154,7 @@ export class SettingsComponent implements OnInit {
     })
   }
 
+  setColorScheme(v: ColorScheme) { this.ds.update({ colorScheme: v }) }
   setHeadingFont(f: string) { this.ds.update({ headingFont: f as 'sans' | 'serif' | 'mono' }) }
   setTitleFont(f: string) { this.ds.update({ titleFont: f as 'sans' | 'serif' | 'mono' }) }
   setDetailFont(f: string) { this.ds.update({ detailFont: f as 'sans' | 'serif' | 'mono' }) }

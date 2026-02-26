@@ -3,9 +3,10 @@
   @if (ds.settings().detailLayout === 'backdrop' && item()?.backdrop_url) {
     <div class="absolute -top-16 left-0 right-0 h-[82vh] overflow-hidden pointer-events-none">
       <img [src]="item()!.backdrop_url!" alt=""
-        [class]="'w-full h-full object-cover object-top opacity-35 ' + backdropBlurClass()" />
+        [class]="'w-full h-full object-cover object-top opacity-60 ' + backdropBlurClass()" />
+      <div class="absolute inset-0 backdrop-vignette"></div>
       @if (ds.settings().detailBackdropTint) {
-        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface/70 to-surface"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-surface/40 to-transparent"></div>
       }
     </div>
   <!-- Poster Header -->
@@ -14,10 +15,7 @@
       <div class="relative max-w-6xl mx-auto h-[35vh] rounded-xl overflow-hidden">
         <img [src]="item()!.backdrop_url!" alt=""
           [class]="'w-full h-full object-cover object-[center_20%] ' + backdropBlurClass()" />
-        <!-- Fade edges to background -->
-        <div class="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-surface/50"></div>
-        <div class="absolute inset-0 bg-gradient-to-r from-surface/60 via-transparent to-surface/60"></div>
-        <div class="absolute inset-0"></div>
+        <div class="absolute inset-0 backdrop-vignette"></div>
       </div>
     </div>
   }

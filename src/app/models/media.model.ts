@@ -130,8 +130,11 @@ export interface ShowGroup {
 }
 
 
+export type ColorScheme = 'default' | 'midnight' | 'ember' | 'forest' | 'rose' | 'slate'
+
 export interface DisplaySettings {
   theme: 'dark' | 'light'
+  colorScheme: ColorScheme
   accentColor: string
   libraryName: string
   showDirectors: boolean
@@ -150,6 +153,7 @@ export interface DisplaySettings {
 
 export const DEFAULT_DISPLAY_SETTINGS: DisplaySettings = {
   theme: 'dark',
+  colorScheme: 'default',
   accentColor: '#e50914',
   libraryName: 'My Library',
   showDirectors: false,

@@ -14,15 +14,11 @@
   --color-surface-overlay: rgb(255 255 255 / 0.06);
   --color-accent:          #e50914;
   --color-accent-hover:    color-mix(in srgb, var(--color-accent) 80%, black);
+  --text-rgb:              255 255 255;
+  --surface-rgb:           10 10 10;
   --card-gap: 0.75rem;
   --row-spacing: 2rem;
   --card-columns-offset: 0;
-}
-
-[data-theme="light"] {
-  --color-surface:         rgb(245 245 245);
-  --color-surface-raised:  rgb(255 255 255);
-  --color-surface-overlay: rgb(0 0 0 / 0.06);
 }
 
 /* ── Base styles ───────────────────────────────────────────────────────── */
@@ -34,7 +30,7 @@
 
   html {
     background-color: var(--color-surface);
-    color: white;
+    color: rgb(var(--text-rgb));
     scrollbar-gutter: stable;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -47,8 +43,8 @@
 
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: var(--color-surface); }
-  ::-webkit-scrollbar-thumb { @apply bg-white/20 rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-white/40; }
+  ::-webkit-scrollbar-thumb { background-color: rgb(var(--text-rgb) / 0.20); @apply rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { background-color: rgb(var(--text-rgb) / 0.40); }
 }
 
 /* ── Accent helpers (CSS vars aren't picked up as Tailwind classes) ─────── */
@@ -82,61 +78,88 @@
 @media (min-width: 1280px) { :root { --card-width: calc((100vw - 4rem - 15px - 7 * 0.75rem) / (8 + var(--card-columns-offset))); } }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Light-mode overrides — flat selectors (no PostCSS nesting plugin present)
-   Repaint the text-white/* and bg-white/* opacity utilities so that
-   components need zero changes between themes.
+   Color-scheme-aware overrides
+   Repaint the text-white/* and bg-white/* opacity utilities using
+   --text-rgb so components work across all color schemes and themes.
    ───────────────────────────────────────────────────────────────────────── */
 
-/* Base inherited text color (covers elements without an explicit text-* class) */
-html[data-theme="light"] { color: rgb(20 20 20); }
-
 /* Text — base + opacity variants */
-[data-theme="light"] .text-white     { color: rgb(20 20 20); }
-[data-theme="light"] .text-white\/10 { color: rgb(20 20 20 / 0.10); }
-[data-theme="light"] .text-white\/20 { color: rgb(20 20 20 / 0.20); }
-[data-theme="light"] .text-white\/25 { color: rgb(20 20 20 / 0.25); }
-[data-theme="light"] .text-white\/30 { color: rgb(20 20 20 / 0.30); }
-[data-theme="light"] .text-white\/40 { color: rgb(20 20 20 / 0.40); }
-[data-theme="light"] .text-white\/50 { color: rgb(20 20 20 / 0.50); }
-[data-theme="light"] .text-white\/60 { color: rgb(20 20 20 / 0.60); }
-[data-theme="light"] .text-white\/70 { color: rgb(20 20 20 / 0.70); }
-[data-theme="light"] .text-white\/80 { color: rgb(20 20 20 / 0.80); }
-[data-theme="light"] .text-white\/90 { color: rgb(20 20 20 / 0.90); }
+.text-white     { color: rgb(var(--text-rgb)); }
+.text-white\/10 { color: rgb(var(--text-rgb) / 0.10); }
+.text-white\/20 { color: rgb(var(--text-rgb) / 0.20); }
+.text-white\/25 { color: rgb(var(--text-rgb) / 0.25); }
+.text-white\/30 { color: rgb(var(--text-rgb) / 0.30); }
+.text-white\/40 { color: rgb(var(--text-rgb) / 0.40); }
+.text-white\/50 { color: rgb(var(--text-rgb) / 0.50); }
+.text-white\/60 { color: rgb(var(--text-rgb) / 0.60); }
+.text-white\/70 { color: rgb(var(--text-rgb) / 0.70); }
+.text-white\/80 { color: rgb(var(--text-rgb) / 0.80); }
+.text-white\/90 { color: rgb(var(--text-rgb) / 0.90); }
 
 /* hover:text-white/* */
-[data-theme="light"] .hover\:text-white:hover     { color: rgb(20 20 20); }
-[data-theme="light"] .hover\:text-white\/50:hover { color: rgb(20 20 20 / 0.50); }
-[data-theme="light"] .hover\:text-white\/60:hover { color: rgb(20 20 20 / 0.60); }
-[data-theme="light"] .hover\:text-white\/70:hover { color: rgb(20 20 20 / 0.70); }
+.hover\:text-white:hover     { color: rgb(var(--text-rgb)); }
+.hover\:text-white\/50:hover { color: rgb(var(--text-rgb) / 0.50); }
+.hover\:text-white\/60:hover { color: rgb(var(--text-rgb) / 0.60); }
+.hover\:text-white\/70:hover { color: rgb(var(--text-rgb) / 0.70); }
 
 /* group-hover:text-white — used in EpisodeRow and similar */
-[data-theme="light"] .group:hover .group-hover\:text-white     { color: rgb(20 20 20); }
-[data-theme="light"] .group:hover .group-hover\:text-white\/60 { color: rgb(20 20 20 / 0.60); }
+.group:hover .group-hover\:text-white     { color: rgb(var(--text-rgb)); }
+.group:hover .group-hover\:text-white\/60 { color: rgb(var(--text-rgb) / 0.60); }
 
 /* Backgrounds used as tints / overlays (not solid-white UI elements) */
-[data-theme="light"] .bg-white\/5    { background-color: rgb(20 20 20 / 0.05); }
-[data-theme="light"] .bg-white\/8    { background-color: rgb(20 20 20 / 0.08); }
-[data-theme="light"] .bg-white\/10   { background-color: rgb(20 20 20 / 0.10); }
-[data-theme="light"] .bg-white\/20   { background-color: rgb(20 20 20 / 0.20); }
-[data-theme="light"] .bg-white\/40   { background-color: rgb(20 20 20 / 0.40); }
-[data-theme="light"] .hover\:bg-white\/8:hover { background-color: rgb(20 20 20 / 0.08); }
-[data-theme="light"] .hover\:bg-white\/10:hover { background-color: rgb(20 20 20 / 0.10); }
+.bg-white\/5    { background-color: rgb(var(--text-rgb) / 0.05); }
+.bg-white\/8    { background-color: rgb(var(--text-rgb) / 0.08); }
+.bg-white\/10   { background-color: rgb(var(--text-rgb) / 0.10); }
+.bg-white\/20   { background-color: rgb(var(--text-rgb) / 0.20); }
+.bg-white\/40   { background-color: rgb(var(--text-rgb) / 0.40); }
+.hover\:bg-white\/8:hover { background-color: rgb(var(--text-rgb) / 0.08); }
+.hover\:bg-white\/10:hover { background-color: rgb(var(--text-rgb) / 0.10); }
 
 /* Borders */
-[data-theme="light"] .border-white\/5  { border-color: rgb(20 20 20 / 0.05); }
-[data-theme="light"] .border-white\/10 { border-color: rgb(20 20 20 / 0.10); }
-[data-theme="light"] .border-white\/20 { border-color: rgb(20 20 20 / 0.20); }
-[data-theme="light"] .border-white\/30 { border-color: rgb(20 20 20 / 0.30); }
-[data-theme="light"] .hover\:border-white\/40:hover { border-color: rgb(20 20 20 / 0.40); }
+.border-white\/5  { border-color: rgb(var(--text-rgb) / 0.05); }
+.border-white\/10 { border-color: rgb(var(--text-rgb) / 0.10); }
+.border-white\/20 { border-color: rgb(var(--text-rgb) / 0.20); }
+.border-white\/30 { border-color: rgb(var(--text-rgb) / 0.30); }
+.hover\:border-white\/40:hover { border-color: rgb(var(--text-rgb) / 0.40); }
 
 /* Placeholder text */
-[data-theme="light"] .placeholder-white\/30::placeholder { color: rgb(20 20 20 / 0.30); }
-[data-theme="light"] .placeholder-white\/25::placeholder { color: rgb(20 20 20 / 0.25); }
+.placeholder-white\/30::placeholder { color: rgb(var(--text-rgb) / 0.30); }
+.placeholder-white\/25::placeholder { color: rgb(var(--text-rgb) / 0.25); }
 
-/* Scrollbar thumb hover */
-[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background-color: rgb(20 20 20 / 0.40); }
-
-/* Nav gradient — swap dark fade for light fade */
+/* Nav gradient — uses surface color for fade */
 [data-theme="light"] header {
-  background: linear-gradient(to bottom, rgb(245 245 245 / 0.97), transparent);
+  background: linear-gradient(to bottom, rgb(var(--surface-rgb) / 0.97), transparent);
+}
+
+/* ── Backdrop vignette (Letterboxd-inspired smooth edge fade) ──────────── */
+.backdrop-vignette {
+  background-image:
+    /* Horizontal: fade sides ~0–16% in, clear middle */
+    linear-gradient(to right,
+      rgb(var(--surface-rgb)),
+      rgb(var(--surface-rgb) / 0.92) 2%,
+      rgb(var(--surface-rgb) / 0.72) 5%,
+      rgb(var(--surface-rgb) / 0.45) 8.5%,
+      rgb(var(--surface-rgb) / 0.2)  12%,
+      rgb(var(--surface-rgb) / 0.06) 14.5%,
+      rgb(var(--surface-rgb) / 0)    17%,
+      rgb(var(--surface-rgb) / 0)    83%,
+      rgb(var(--surface-rgb) / 0.06) 85.5%,
+      rgb(var(--surface-rgb) / 0.2)  88%,
+      rgb(var(--surface-rgb) / 0.45) 91.5%,
+      rgb(var(--surface-rgb) / 0.72) 95%,
+      rgb(var(--surface-rgb) / 0.92) 98%,
+      rgb(var(--surface-rgb))
+    ),
+    /* Vertical: solid bottom ~20%, then fade up to ~58% */
+    linear-gradient(to top,
+      rgb(var(--surface-rgb)),
+      rgb(var(--surface-rgb)) 20%,
+      rgb(var(--surface-rgb) / 0.92) 26%,
+      rgb(var(--surface-rgb) / 0.72) 33%,
+      rgb(var(--surface-rgb) / 0.45) 41%,
+      rgb(var(--surface-rgb) / 0.2)  49%,
+      rgb(var(--surface-rgb) / 0.06) 54%,
+      rgb(var(--surface-rgb) / 0)    59%
+    );
 }

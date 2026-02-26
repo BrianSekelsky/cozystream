@@ -197,6 +197,24 @@
   <!-- ═══ Appearance Tab ═══ -->
   @if (activeTab() === 'appearance') {
 
+    <!-- Color scheme -->
+    <div class="mb-6">
+      <p class="text-sm font-medium text-white mb-1">Color scheme</p>
+      <p class="text-xs text-white/40 mb-3">Background and text color pairing for dark and light modes.</p>
+      <div class="grid grid-cols-3 gap-2">
+        @for (opt of colorSchemeOptions; track opt.value) {
+          <button (click)="setColorScheme(opt.value)"
+            [class]="'flex flex-col items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm transition-colors ' + (ds.settings().colorScheme === opt.value ? 'ring-2 ring-accent bg-surface-overlay' : 'bg-surface-overlay/50 hover:bg-surface-overlay')">
+            <div class="flex w-full h-6 rounded overflow-hidden border border-white/10">
+              <div class="w-1/2" [style.backgroundColor]="opt.darkBg"></div>
+              <div class="w-1/2" [style.backgroundColor]="opt.lightBg"></div>
+            </div>
+            <span class="text-xs text-white/70">{{ opt.label }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
     <!-- Poster corners -->
     <div class="mb-5">
       <p class="text-sm font-medium text-white mb-1">Poster corners</p>
