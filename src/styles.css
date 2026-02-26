@@ -15,8 +15,9 @@
   --color-accent:          #e50914;
   --color-accent-hover:    color-mix(in srgb, var(--color-accent) 80%, black);
   --text-rgb:              255 255 255;
+  --text-hover-rgb:        255 255 255;
   --surface-rgb:           10 10 10;
-  --card-gap: 0.75rem;
+  --card-gap: 1rem;
   --row-spacing: 2rem;
   --card-columns-offset: 0;
 }
@@ -70,12 +71,12 @@
 
 /* ── Card-width variable (mirrors Browse grid breakpoints, offset by --card-columns-offset) ── */
 :root {
-  --card-width: calc((100vw - 4rem - 15px - 2 * 0.75rem) / (3 + var(--card-columns-offset)));
+  --card-width: calc((100vw - 4rem - 15px - 2 * var(--card-gap)) / (3 + var(--card-columns-offset)));
 }
-@media (min-width: 640px)  { :root { --card-width: calc((100vw - 4rem - 15px - 3 * 0.75rem) / (4 + var(--card-columns-offset))); } }
-@media (min-width: 768px)  { :root { --card-width: calc((100vw - 4rem - 15px - 4 * 0.75rem) / (5 + var(--card-columns-offset))); } }
-@media (min-width: 1024px) { :root { --card-width: calc((100vw - 4rem - 15px - 5 * 0.75rem) / (6 + var(--card-columns-offset))); } }
-@media (min-width: 1280px) { :root { --card-width: calc((100vw - 4rem - 15px - 7 * 0.75rem) / (8 + var(--card-columns-offset))); } }
+@media (min-width: 640px)  { :root { --card-width: calc((100vw - 4rem - 15px - 3 * var(--card-gap)) / (4 + var(--card-columns-offset))); } }
+@media (min-width: 768px)  { :root { --card-width: calc((100vw - 4rem - 15px - 4 * var(--card-gap)) / (5 + var(--card-columns-offset))); } }
+@media (min-width: 1024px) { :root { --card-width: calc((100vw - 4rem - 15px - 5 * var(--card-gap)) / (6 + var(--card-columns-offset))); } }
+@media (min-width: 1280px) { :root { --card-width: calc((100vw - 4rem - 15px - 7 * var(--card-gap)) / (8 + var(--card-columns-offset))); } }
 
 /* ─────────────────────────────────────────────────────────────────────────
    Color-scheme-aware overrides
@@ -96,15 +97,15 @@
 .text-white\/80 { color: rgb(var(--text-rgb) / 0.80); }
 .text-white\/90 { color: rgb(var(--text-rgb) / 0.90); }
 
-/* hover:text-white/* */
-.hover\:text-white:hover     { color: rgb(var(--text-rgb)); }
-.hover\:text-white\/50:hover { color: rgb(var(--text-rgb) / 0.50); }
-.hover\:text-white\/60:hover { color: rgb(var(--text-rgb) / 0.60); }
-.hover\:text-white\/70:hover { color: rgb(var(--text-rgb) / 0.70); }
+/* hover:text-white/* — uses --text-hover-rgb (white in dark, black in light) */
+.hover\:text-white:hover     { color: rgb(var(--text-hover-rgb)); }
+.hover\:text-white\/50:hover { color: rgb(var(--text-hover-rgb) / 0.50); }
+.hover\:text-white\/60:hover { color: rgb(var(--text-hover-rgb) / 0.60); }
+.hover\:text-white\/70:hover { color: rgb(var(--text-hover-rgb) / 0.70); }
 
 /* group-hover:text-white — used in EpisodeRow and similar */
-.group:hover .group-hover\:text-white     { color: rgb(var(--text-rgb)); }
-.group:hover .group-hover\:text-white\/60 { color: rgb(var(--text-rgb) / 0.60); }
+.group:hover .group-hover\:text-white     { color: rgb(var(--text-hover-rgb)); }
+.group:hover .group-hover\:text-white\/60 { color: rgb(var(--text-hover-rgb) / 0.60); }
 
 /* Backgrounds used as tints / overlays (not solid-white UI elements) */
 .bg-white\/5    { background-color: rgb(var(--text-rgb) / 0.05); }
@@ -126,9 +127,49 @@
 .placeholder-white\/30::placeholder { color: rgb(var(--text-rgb) / 0.30); }
 .placeholder-white\/25::placeholder { color: rgb(var(--text-rgb) / 0.25); }
 
-/* Nav gradient — uses surface color for fade */
-[data-theme="light"] header {
-  background: linear-gradient(to bottom, rgb(var(--surface-rgb) / 0.97), transparent);
+/* Nav gradient now uses --surface-rgb inline on the header element */
+
+/* ── DVD Case mode ────────────────────────────────────────────────────── */
+
+.dvd-case-perspective {
+  perspective: 800px;
+}
+
+.dvd-case {
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(1.5deg);
+  box-shadow:
+    2px 4px 12px rgb(0 0 0 / 0.35),
+    1px 2px 4px rgb(0 0 0 / 0.25);
+  transition: transform 300ms ease, box-shadow 300ms ease;
+}
+
+.group:hover .dvd-case {
+  transform: rotateY(0deg) translateY(-24px);
+  box-shadow:
+    4px 12px 28px rgb(0 0 0 / 0.55),
+    2px 6px 10px rgb(0 0 0 / 0.35);
+}
+
+.dvd-spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  z-index: 10;
+  background: linear-gradient(to right, rgb(0 0 0 / 0.5), rgb(0 0 0 / 0.15) 60%, rgb(255 255 255 / 0.08));
+  pointer-events: none;
+}
+
+.dvd-label {
+  transition: opacity 200ms ease 100ms;
+  opacity: 0;
+}
+
+.group:hover .dvd-label {
+  opacity: 1;
 }
 
 /* ── Backdrop vignette (Letterboxd-inspired smooth edge fade) ──────────── */

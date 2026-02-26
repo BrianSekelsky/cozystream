@@ -71,6 +71,19 @@ export class SettingsComponent implements OnInit {
     { value: 'light' as const, label: 'Light' },
     { value: 'heavy' as const, label: 'Heavy' },
   ]
+  browseStyleOptions = [
+    { value: 'default' as const, label: 'Default' },
+    { value: 'dvd-case' as const, label: 'DVD Case' },
+  ]
+  cardGapOptions = [
+    { value: 'compact' as const, label: 'Compact' },
+    { value: 'comfortable' as const, label: 'Comfortable' },
+    { value: 'spacious' as const, label: 'Spacious' },
+  ]
+  cardTextAlignOptions = [
+    { value: 'left' as const, label: 'Left' },
+    { value: 'center' as const, label: 'Center' },
+  ]
   settings = signal<AppSettings>({ library_paths: [], tmdb_api_key: '' })
   tmdbKey = ''
   picking = signal(false)
@@ -171,6 +184,9 @@ export class SettingsComponent implements OnInit {
   setRowSpacing(v: string) { this.ds.update({ rowSpacing: v as 'compact' | 'comfortable' | 'spacious' }) }
   setCardSize(v: string) { this.ds.update({ cardSize: v as 'small' | 'medium' | 'large' }) }
   setBackdropBlur(v: string) { this.ds.update({ detailBackdropBlur: v as 'none' | 'light' | 'heavy' }) }
+  setBrowseStyle(v: string) { this.ds.update({ browseStyle: v as 'default' | 'dvd-case' }) }
+  setCardGap(v: string) { this.ds.update({ cardGap: v as 'compact' | 'comfortable' | 'spacious' }) }
+  setCardTextAlign(v: string) { this.ds.update({ cardTextAlign: v as 'left' | 'center' }) }
 
   save() {
     this.saving.set(true)

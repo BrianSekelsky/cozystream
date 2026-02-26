@@ -149,6 +149,9 @@ export interface DisplaySettings {
   showYearUnderPoster: boolean
   detailBackdropBlur: 'none' | 'light' | 'heavy'
   detailBackdropTint: boolean
+  browseStyle: 'default' | 'dvd-case'
+  cardGap: 'compact' | 'comfortable' | 'spacious'
+  cardTextAlign: 'left' | 'center'
 }
 
 export const DEFAULT_DISPLAY_SETTINGS: DisplaySettings = {
@@ -168,4 +171,7 @@ export const DEFAULT_DISPLAY_SETTINGS: DisplaySettings = {
   showYearUnderPoster: true,
   detailBackdropBlur: 'none',
   detailBackdropTint: true,
+  browseStyle: 'default',
+  cardGap: 'comfortable',
+  cardTextAlign: 'left',
 }

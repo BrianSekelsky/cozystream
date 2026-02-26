@@ -131,9 +131,10 @@ export class BrowseComponent implements OnInit, OnDestroy {
 
   movieGridClass = computed(() => {
     const size = this.ds.settings().cardSize
-    if (size === 'small') return 'grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4 gap-y-8'
-    if (size === 'large') return 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 gap-y-8'
-    return 'grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-4 gap-y-8'
+    const base = 'grid gap-y-8'
+    if (size === 'small') return `${base} grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10`
+    if (size === 'large') return `${base} grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6`
+    return `${base} grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
   })
 
   ngOnInit() {

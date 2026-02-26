@@ -111,7 +111,7 @@
       @if (filteredMovies().length === 0) {
         <div class="text-white/40 text-sm text-center py-16">No results found.</div>
       } @else {
-        <div [class]="movieGridClass()">
+        <div [class]="movieGridClass()" style="column-gap: var(--card-gap)">
           @for (item of filteredMovies(); track item.id) {
             <app-media-card [item]="item" (watchlistToggled)="handleWatchlistToggle($event)" />
           }
@@ -124,7 +124,7 @@
       @if (showGroups().length === 0) {
         <div class="text-white/40 text-sm text-center py-16">No shows found.</div>
       } @else {
-        <div [class]="movieGridClass()">
+        <div [class]="movieGridClass()" style="column-gap: var(--card-gap)">
           @for (show of showGroups(); track show.sortTitle) {
             <app-show-card [show]="show" (selected)="openShow($event)" />
           }
@@ -134,7 +134,7 @@
 
     <!-- ── TV: SEASONS ─────────────────────────────────────────────────────── -->
     @if (filter() === 'episode' && tvView() === 'seasons' && selectedShow()) {
-      <div [class]="movieGridClass()">
+      <div [class]="movieGridClass()" style="column-gap: var(--card-gap)">
         @for (season of seasonNumbers(); track season) {
           <app-season-card
             [season]="season"

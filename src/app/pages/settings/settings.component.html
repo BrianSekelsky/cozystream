@@ -151,6 +151,48 @@
       </div>
     </div>
 
+    <!-- Card spacing -->
+    <div class="mb-5">
+      <p class="text-sm font-medium text-white mb-1">Card spacing</p>
+      <p class="text-xs text-white/40 mb-2">Horizontal gap between posters.</p>
+      <div class="flex gap-2">
+        @for (opt of cardGapOptions; track opt.value) {
+          <button (click)="setCardGap(opt.value)"
+            [class]="'px-4 py-2 rounded-lg text-sm transition-colors ' + (ds.settings().cardGap === opt.value ? 'bg-accent text-white' : 'bg-surface-overlay text-white/60 hover:text-white')">
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Card text alignment -->
+    <div class="mb-5">
+      <p class="text-sm font-medium text-white mb-1">Card text alignment</p>
+      <p class="text-xs text-white/40 mb-2">Alignment of title and details below posters.</p>
+      <div class="flex gap-2">
+        @for (opt of cardTextAlignOptions; track opt.value) {
+          <button (click)="setCardTextAlign(opt.value)"
+            [class]="'px-4 py-2 rounded-lg text-sm transition-colors ' + (ds.settings().cardTextAlign === opt.value ? 'bg-accent text-white' : 'bg-surface-overlay text-white/60 hover:text-white')">
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Browse style -->
+    <div class="mb-5">
+      <p class="text-sm font-medium text-white mb-1">Browse style</p>
+      <p class="text-xs text-white/40 mb-2">Changes how posters are displayed on the browse page.</p>
+      <div class="flex gap-2">
+        @for (opt of browseStyleOptions; track opt.value) {
+          <button (click)="setBrowseStyle(opt.value)"
+            [class]="'px-4 py-2 rounded-lg text-sm transition-colors ' + (ds.settings().browseStyle === opt.value ? 'bg-accent text-white' : 'bg-surface-overlay text-white/60 hover:text-white')">
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </div>
+
     <!-- Backdrop blur -->
     <div class="mb-5">
       <p class="text-sm font-medium text-white mb-1">Detail backdrop blur</p>

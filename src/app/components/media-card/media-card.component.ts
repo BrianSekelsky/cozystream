@@ -75,4 +75,22 @@ export class MediaCardComponent implements OnInit {
     if (c === 'large') return 'rounded-2xl'
     return ''
   }
+
+  dvdCaseCornerClass(): string {
+    const c = this.ds.settings().posterCorners
+    if (c === 'small') return 'rounded'
+    if (c === 'large') return 'rounded-lg'
+    return 'rounded-sm'
+  }
+
+  dvdSpineCornerClass(): string {
+    const c = this.ds.settings().posterCorners
+    if (c === 'small') return 'rounded-l'
+    if (c === 'large') return 'rounded-l-lg'
+    return 'rounded-l-sm'
+  }
+
+  cardTextAlignClass(): string {
+    return this.ds.settings().cardTextAlign === 'center' ? 'text-center' : 'text-left'
+  }
 }
