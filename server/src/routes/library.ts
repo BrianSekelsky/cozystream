@@ -18,7 +18,7 @@ import {
   removeItemFromCollection,
 } from '../db/queries'
 import { toggleUserFavorite, toggleUserWatchlist } from '../db/auth-queries'
-import { requireAuth } from '../middleware/auth'
+import { requireAuth, requireAdmin } from '../middleware/auth'
 import { scanLibrary, isScanInProgress, getLibraryPaths } from '../services/scanner'
 import {
   searchMovieSuggestions,
@@ -61,8 +61,8 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     return item
   })
 
-  // POST /api/library/scan - trigger a library scan
-  fastify.post('/library/scan', async (reply) => {
+  // POST /api/library/scan - trigger a library scan (admin only)
+  fastify.post('/library/scan', { preHandler: requireAdmin(fastify) }, async (reply) => {
     if (isScanInProgress()) {
       return { message: 'Scan already in progress' }
     }
@@ -94,11 +94,11 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     return { ok: true }
   })
 
-  // PUT /api/library/:id — manual metadata edit
+  // PUT /api/library/:id — manual metadata edit (admin only)
   fastify.put<{
     Params: { id: string }
     Body: Record<string, unknown>
-  }>('/library/:id', async (request, reply) => {
+  }>('/library/:id', { preHandler: requireAdmin(fastify) }, async (request, reply) => {
     const id = parseInt(request.params.id)
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
@@ -145,11 +145,11 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     return suggestions
   })
 
-  // POST /api/library/:id/apply-suggestion — fetch full metadata for a TMDB ID and save
+  // POST /api/library/:id/apply-suggestion — fetch full metadata for a TMDB ID and save (admin only)
   fastify.post<{
     Params: { id: string }
     Body: { tmdb_id: string }
-  }>('/library/:id/apply-suggestion', async (request, reply) => {
+  }>('/library/:id/apply-suggestion', { preHandler: requireAdmin(fastify) }, async (request, reply) => {
     const id = parseInt(request.params.id)
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })

@@ -178,9 +178,9 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.status(404).send({ error: 'No active transcode session' })
       }
 
-      const filename = request.params.file
-      // Sanitize: only allow .ts files to prevent path traversal
-      if (!filename.endsWith('.ts') || filename.includes('..')) {
+      // Sanitize: strip directory components and only allow .ts files
+      const filename = path.basename(request.params.file)
+      if (!filename.endsWith('.ts')) {
         return reply.status(400).send({ error: 'Invalid segment filename' })
       }
 

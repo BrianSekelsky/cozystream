@@ -94,10 +94,10 @@ export function getInviteCodes(createdBy: number): InviteCode[] {
     .all(createdBy) as InviteCode[]
 }
 
-export function deleteInviteCode(code: string): void {
+export function deleteInviteCode(code: string, createdBy: number): void {
   getDB()
-    .prepare('DELETE FROM invite_codes WHERE code = ? AND used_by IS NULL')
-    .run(code)
+    .prepare('DELETE FROM invite_codes WHERE code = ? AND created_by = ? AND used_by IS NULL')
+    .run(code, createdBy)
 }
 
 // ---------------------------------------------------------------------------

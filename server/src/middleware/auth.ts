@@ -5,7 +5,7 @@ export function requireAuth(fastify: FastifyInstance) {
     try {
       await request.jwtVerify()
     } catch {
-      reply.status(401).send({ error: 'Unauthorized' })
+      return reply.status(401).send({ error: 'Unauthorized' })
     }
   }
 }
@@ -15,10 +15,10 @@ export function requireAdmin(fastify: FastifyInstance) {
     try {
       await request.jwtVerify()
       if ((request.user as any).role !== 'admin') {
-        reply.status(403).send({ error: 'Admin access required' })
+        return reply.status(403).send({ error: 'Admin access required' })
       }
     } catch {
-      reply.status(401).send({ error: 'Unauthorized' })
+      return reply.status(401).send({ error: 'Unauthorized' })
     }
   }
 }

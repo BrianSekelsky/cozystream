@@ -1,6 +1,6 @@
 <div class="min-h-screen flex flex-col bg-surface">
   <!-- Fixed nav -->
-  <header class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 to-transparent">
+  <header class="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 from-70% to-transparent">
     <nav class="flex items-center gap-4 px-8 py-4">
       <button
         [routerLink]="['/browse']"
@@ -9,6 +9,13 @@
       </button>
 
       <div class="flex-1"></div>
+
+      <!-- Theme toggle -->
+      <button
+        (click)="toggleTheme()"
+        class="text-sm text-white/60 hover:text-white transition-colors">
+        Switch to {{ ds.settings().theme === 'dark' ? 'Light' : 'Dark' }} Mode
+      </button>
 
       <!-- Search — only on /browse -->
       @if (isOnBrowse()) {
@@ -41,13 +48,6 @@
           Settings
         </button>
       }
-
-      <!-- Theme toggle -->
-      <button
-        (click)="toggleTheme()"
-        class="text-sm text-white/60 hover:text-white transition-colors">
-        {{ ds.settings().theme === 'dark' ? 'Light' : 'Dark' }} Mode
-      </button>
 
       <!-- User info & logout -->
       @if (auth.user(); as u) {

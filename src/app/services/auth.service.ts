@@ -21,7 +21,29 @@ export class AuthService {
   readonly isLoggedIn = computed(() => !!this._token())
   readonly isAdmin = computed(() => this._user()?.role === 'admin')
 
+  constructor() {
+    this.validateToken()
+  }
+
   // --- Public auth ---
+
+  /** Verify the stored token is still valid and refresh user data from the server */
+  private validateToken(): void {
+    if (!this._token()) return
+    this.http.get<User>(`${this.base}/me`).subscribe({
+      next: (user) => {
+        this._user.set(user)
+        localStorage.setItem(USER_KEY, JSON.stringify(user))
+      },
+      error: () => {
+        // Token is invalid or expired — clear auth state
+        this._token.set(null)
+        this._user.set(null)
+        localStorage.removeItem(TOKEN_KEY)
+        localStorage.removeItem(USER_KEY)
+      },
+    })
+  }
 
   checkStatus(): Observable<AuthStatus> {
     return this.http.get<AuthStatus>(`${this.base}/status`)
