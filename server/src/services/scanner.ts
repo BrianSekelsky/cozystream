@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { upsertMediaItem, deleteMediaItemByPath, getSetting } from '../db/queries'
 import { fetchMovieMetadata, fetchTVMetadata } from './metadata'
+import { probeFile, findExternalSubtitles } from './probe'
 import {
   isVideoFile,
   parseMovieFilename,
@@ -77,6 +78,18 @@ async function scanDirectory(
 async function indexVideoFile(filePath: string): Promise<void> {
   const stat = fs.statSync(filePath)
 
+  // Probe the file for codec info, audio tracks, subtitle tracks
+  let codecInfoJson: string | null = null
+  let probeDuration: number | null = null
+  try {
+    const probe = await probeFile(filePath)
+    const externalSubs = findExternalSubtitles(filePath)
+    codecInfoJson = JSON.stringify({ ...probe, externalSubtitles: externalSubs })
+    probeDuration = probe.durationSeconds
+  } catch (err) {
+    console.warn(`[scanner] ffprobe failed for ${filePath}:`, err)
+  }
+
   if (isEpisodeFile(filePath)) {
     const info = parseEpisodeFilename(filePath)
     if (!info) return
@@ -97,8 +110,8 @@ async function indexVideoFile(filePath: string): Promise<void> {
       genre: showMeta?.genre ?? null,
       file_path: filePath,
       file_size: stat.size,
-      duration: showMeta?.duration ?? null,
-      codec_info: null,
+      duration: probeDuration ?? showMeta?.duration ?? null,
+      codec_info: codecInfoJson,
       tmdb_id: showMeta?.tmdbId ?? null,
       poster_url: showMeta?.posterUrl ?? null,
       backdrop_url: showMeta?.backdropUrl ?? null,
@@ -136,8 +149,8 @@ async function indexVideoFile(filePath: string): Promise<void> {
       genre: meta?.genre ?? null,
       file_path: filePath,
       file_size: stat.size,
-      duration: meta?.duration ?? null,
-      codec_info: null,
+      duration: probeDuration ?? meta?.duration ?? null,
+      codec_info: codecInfoJson,
       tmdb_id: meta?.tmdbId ?? null,
       poster_url: meta?.posterUrl ?? null,
       backdrop_url: meta?.backdropUrl ?? null,

@@ -76,6 +76,51 @@ export interface SeasonPosterOption {
   voteCount: number
 }
 
+// ── Stream info (from /api/stream/:id/info) ──────────────────────────────
+
+export interface AudioTrackInfo {
+  index: number
+  codec: string
+  language: string | null
+  channels: number
+  title: string | null
+}
+
+export interface SubtitleTrackInfo {
+  index: number
+  codec: string
+  language: string | null
+  title: string | null
+  forced: boolean
+  extractable: boolean
+}
+
+export interface ExternalSubtitleInfo {
+  index: number
+  language: string | null
+  forced: boolean
+  format: string
+}
+
+export interface StreamInfo {
+  canDirectPlay: boolean
+  codecInfo: any | null
+  duration: number | null
+  audioTracks: AudioTrackInfo[]
+  subtitleTracks: SubtitleTrackInfo[]
+  externalSubtitles: ExternalSubtitleInfo[]
+  directPlayUrl: string
+  hlsUrl: string
+}
+
+// A unified subtitle entry for the player UI
+export interface PlayerSubtitleTrack {
+  index: number
+  label: string
+  language: string | null
+  type: 'embedded' | 'external'
+}
+
 export interface ShowGroup {
   sortTitle: string
   name: string

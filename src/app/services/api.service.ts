@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http'
 import { Observable } from 'rxjs'
 import {
   MediaItem, Collection, WatchProgress, CreditsResult, AppSettings, MovieSuggestion, SeasonPosterOption,
+  StreamInfo,
 } from '../models/media.model'
 
 @Injectable({ providedIn: 'root' })
@@ -124,7 +125,21 @@ export class ApiService {
     return this.http.get<{ path: string | null; cancelled: boolean }>(`${this.base}/settings/pick-folder`)
   }
 
+  // ── Streaming ────────────────────────────────────────────────────────────
+
   streamUrl(id: number): string {
     return `${this.base}/stream/${id}`
+  }
+
+  getStreamInfo(id: number): Observable<StreamInfo> {
+    return this.http.get<StreamInfo>(`${this.base}/stream/${id}/info`)
+  }
+
+  subtitleUrl(mediaId: number, trackIndex: number): string {
+    return `${this.base}/stream/${mediaId}/subtitles/${trackIndex}`
+  }
+
+  killHlsSession(id: number): Observable<{ ok: boolean }> {
+    return this.http.delete<{ ok: boolean }>(`${this.base}/stream/${id}/hls`)
   }
 }

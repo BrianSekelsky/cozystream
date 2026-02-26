@@ -1,6 +1,6 @@
 <!-- Backdrop -->
 <div (click)="onBackdropClick($event)"
-  class="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+  class="fixed inset-0 z-50 bg-black flex items-center justify-center p-4">
 
   <!-- Modal -->
   <div class="bg-surface-overlay rounded-xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden">
@@ -48,11 +48,11 @@
               }
 
               <!-- Vote info -->
-              <div class="px-1 pb-1">
+              <!-- <div class="px-1 pb-1">
                 <p class="text-[10px] text-white/30">
                   {{ p.voteAverage.toFixed(1) }} · {{ p.voteCount }} vote{{ p.voteCount !== 1 ? 's' : '' }}
                 </p>
-              </div>
+              </div> -->
             </button>
           }
         </div>

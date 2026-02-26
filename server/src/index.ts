@@ -7,6 +7,7 @@ import { streamingRoutes } from './routes/streaming'
 import { settingsRoutes } from './routes/settings'
 import { getSetting } from './db/queries'
 import { scanLibrary } from './services/scanner'
+import { cleanupAllSessions } from './services/transcoder'
 
 const PORT = parseInt(process.env.PORT ?? '3001', 10)
 
@@ -58,6 +59,16 @@ async function main(): Promise<void> {
     }
   }
 }
+
+// Clean up transcode sessions on shutdown
+process.on('SIGINT', () => {
+  cleanupAllSessions()
+  process.exit(0)
+})
+process.on('SIGTERM', () => {
+  cleanupAllSessions()
+  process.exit(0)
+})
 
 main().catch((err) => {
   console.error(err)
