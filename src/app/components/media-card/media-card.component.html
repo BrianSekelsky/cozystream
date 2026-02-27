@@ -37,6 +37,7 @@
         <!-- Poster -->
         @if (item.poster_url) {
           <img
+            loading="lazy"
             [src]="item.poster_url"
             [alt]="item.title"
             class="w-full aspect-[2/3] object-cover"
@@ -158,6 +159,7 @@
     <div class="cursor-pointer relative overflow-hidden" (click)="navigate()">
       @if (item.poster_url) {
         <img
+          loading="lazy"
           [src]="item.poster_url"
           [alt]="item.title"
           [class]="'w-full aspect-[2/3] object-cover ' + posterCornerClass()"

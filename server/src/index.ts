@@ -1,6 +1,8 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import cookie from '@fastify/cookie'
+import helmet from '@fastify/helmet'
 import jwt from '@fastify/jwt'
 import * as crypto from 'crypto'
 import { initDB, getDB } from './db/schema'
@@ -21,14 +23,25 @@ const server = Fastify({
       options: { colorize: true },
     },
   },
+  bodyLimit: 1_048_576, // 1 MB max request body
 })
 
 async function main(): Promise<void> {
-  // Enable CORS for the Vite dev server
+  // Enable CORS for dev servers
   await server.register(cors, {
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:4200', 'http://127.0.0.1:4200'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
   })
+
+  // Security headers
+  await server.register(helmet, {
+    contentSecurityPolicy: false, // handled by Angular or reverse proxy in production
+    crossOriginEmbedderPolicy: false, // allow loading media/images from external sources (TMDB posters)
+  })
+
+  // Cookie support for httpOnly auth cookies
+  await server.register(cookie)
 
   // Initialize database
   initDB()
@@ -44,13 +57,11 @@ async function main(): Promise<void> {
     secret: jwtSecret,
     verify: {
       extractToken: (request) => {
-        // 1. Authorization header (used by HttpClient interceptor, HLS.js)
+        // 1. Authorization header (legacy / third-party clients)
         const auth = request.headers.authorization
         if (auth?.startsWith('Bearer ')) return auth.slice(7)
-        // 2. Cookie fallback (used by <video src=""> which can't set headers)
-        const cookie = request.headers.cookie ?? ''
-        const match = cookie.match(/(?:^|;\s*)cozystream_token=([^;]+)/)
-        return match?.[1]
+        // 2. httpOnly cookie (primary method for browser clients)
+        return (request as any).cookies?.cozystream_token ?? undefined
       },
     },
   })
@@ -61,6 +72,20 @@ async function main(): Promise<void> {
     process.env.TMDB_API_KEY = storedKey
     console.log('[config] Loaded TMDB API key from database')
   }
+
+  // CSRF protection: reject state-changing requests without JSON content-type.
+  // Browsers won't send Content-Type: application/json from cross-origin form
+  // submissions, so this blocks CSRF attacks alongside sameSite:strict cookies.
+  server.addHook('onRequest', async (request, reply) => {
+    const method = request.method
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') {
+      const ct = request.headers['content-type'] ?? ''
+      // Allow empty bodies (e.g. DELETE with no payload) and JSON
+      if (request.headers['content-length'] && request.headers['content-length'] !== '0' && !ct.includes('application/json')) {
+        return reply.status(415).send({ error: 'Content-Type must be application/json' })
+      }
+    }
+  })
 
   // Register routes
   await server.register(authRoutes, { prefix: '/api' })

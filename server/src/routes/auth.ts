@@ -12,6 +12,17 @@ import { requireAuth, requireAdmin } from '../middleware/auth'
 
 const BCRYPT_ROUNDS = 12
 const MAX_PASSWORD_LENGTH = 72
+const COOKIE_MAX_AGE = 7 * 24 * 60 * 60 // 7 days in seconds
+
+function setAuthCookie(reply: any, token: string): void {
+  reply.setCookie('cozystream_token', token, {
+    httpOnly: true,
+    secure: process.env['NODE_ENV'] === 'production',
+    sameSite: 'strict',
+    path: '/',
+    maxAge: COOKIE_MAX_AGE,
+  })
+}
 
 const authRateLimit = {
   config: {
@@ -45,8 +56,8 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
     if (username.length < 3) {
       return reply.status(400).send({ error: 'Username must be at least 3 characters' })
     }
-    if (password.length < 6) {
-      return reply.status(400).send({ error: 'Password must be at least 6 characters' })
+    if (password.length < 12) {
+      return reply.status(400).send({ error: 'Password must be at least 12 characters' })
     }
     if (password.length > MAX_PASSWORD_LENGTH) {
       return reply.status(400).send({ error: `Password must be at most ${MAX_PASSWORD_LENGTH} characters` })
@@ -69,6 +80,9 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       if (!code || code.used_by !== null) {
         return reply.status(400).send({ error: 'Invalid or already used invite code' })
       }
+      if (code.expires_at && new Date(code.expires_at + 'Z') < new Date()) {
+        return reply.status(400).send({ error: 'Invite code has expired' })
+      }
     }
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
@@ -86,9 +100,9 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
     }
 
     const token = fastify.jwt.sign({ id: userId, username, role }, { expiresIn: '7d' })
+    setAuthCookie(reply, token)
 
     return {
-      token,
       user: { id: userId, username, displayName, role },
     }
   })
@@ -117,9 +131,9 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
       { id: user.id, username: user.username, role: user.role },
       { expiresIn: '7d' }
     )
+    setAuthCookie(reply, token)
 
     return {
-      token,
       user: {
         id: user.id,
         username: user.username,
@@ -129,12 +143,26 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
     }
   })
 
-  // Authenticated: get current user info (from database, not JWT payload)
+  // Authenticated: get current user info and refresh token
   fastify.get('/auth/me', { preHandler: requireAuth(fastify) }, async (request, reply) => {
     const { id } = request.user as { id: number }
     const user = getUserById(id)
     if (!user) return reply.status(401).send({ error: 'User not found' })
+
+    // Refresh the token on every /me call so the session stays alive
+    const token = fastify.jwt.sign(
+      { id: user.id, username: user.username, role: user.role },
+      { expiresIn: '7d' }
+    )
+    setAuthCookie(reply, token)
+
     return { id: user.id, username: user.username, displayName: user.display_name, role: user.role }
+  })
+
+  // Authenticated: logout (clear httpOnly cookie)
+  fastify.post('/auth/logout', { preHandler: requireAuth(fastify) }, async (_request, reply) => {
+    reply.clearCookie('cozystream_token', { path: '/' })
+    return { ok: true }
   })
 
   // Admin: generate invite code

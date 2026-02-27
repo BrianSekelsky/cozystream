@@ -101,6 +101,7 @@ export function initDB(): void {
       used_at    TEXT
     );
 
+    -- expires_at added via migration below
     CREATE TABLE IF NOT EXISTS user_favorites (
       user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       media_item_id INTEGER NOT NULL REFERENCES media_items(id) ON DELETE CASCADE,
@@ -126,5 +127,11 @@ export function initDB(): void {
   }
   if (!columns.includes('in_watchlist')) {
     db.exec('ALTER TABLE media_items ADD COLUMN in_watchlist INTEGER DEFAULT 0')
+  }
+
+  // Add expires_at column to invite_codes
+  const inviteColumns = (db.pragma('table_info(invite_codes)') as { name: string }[]).map((c) => c.name)
+  if (!inviteColumns.includes('expires_at')) {
+    db.exec("ALTER TABLE invite_codes ADD COLUMN expires_at TEXT")
   }
 }

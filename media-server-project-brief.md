@@ -7,7 +7,7 @@ A self-hosted media server application that allows users to share their personal
 **Name:** CozyStream
 
 **Target Platforms (Phase 1):**
-- Web app (browser-based client) ✅ In Progress
+- Web app (browser-based client) ✅ Complete
 - Smart TV apps (future phase)
 
 **Developer Context:** The primary developer has a frontend/web background. The tech stack leans into that strength while keeping backend complexity manageable.
@@ -26,10 +26,10 @@ A self-hosted media server application that allows users to share their personal
 
 ### 2. Streaming & Playback
 - Stream media from the host machine to any connected client ✅
-- On-the-fly transcoding for device compatibility (fallback to direct play when possible) 🟡 Infrastructure only
+- On-the-fly HLS transcoding for device compatibility (fallback to direct play when possible) ✅
 - Resume playback across sessions (track watch progress) ✅
 - Basic playback controls: play, pause, seek, volume ✅
-- Subtitles (if available in file) ❌ Not started
+- Subtitles (embedded extraction + external SRT/ASS/VTT → WebVTT) ✅
 
 ### 3. Collections & Organization
 - Manual collections (create, rename, delete, add/remove items) ✅
@@ -46,11 +46,17 @@ A self-hosted media server application that allows users to share their personal
 - Real-time search with client-side filtering ✅
 - Customizable themes (dark/light), accent colors, fonts, card sizes, layout options ✅
 
-### 5. Group Sharing (Future)
+### 5. User Management & Auth
+- Multi-user support with admin/member roles ✅
+- Invite code registration system (admin generates codes) ✅
+- JWT authentication with HTTP interceptor ✅
+- Per-user favorites, watchlist, and watch progress ✅
+- Admin user management panel ✅
+
+### 6. Group Sharing (Future)
 - Users can create or join groups (e.g., 5–20 people)
 - Group members see a unified library combining all contributors' media
-- Simple invite system (invite link or code)
-- Each group member has their own profile (watch history, continue watching)
+- Unified library view across group members' servers
 
 ---
 
@@ -101,12 +107,13 @@ A self-hosted media server application that allows users to share their personal
 | Component | Technology | Status |
 |-----------|------------|--------|
 | Runtime | **Node.js + TypeScript** | ✅ Implemented |
-| Framework | **Fastify 4.28** | ✅ Implemented |
+| Framework | **Fastify 5** | ✅ Implemented |
 | Database | **SQLite via better-sqlite3** | ✅ Implemented |
-| Transcoding | **FFmpeg** (via fluent-ffmpeg) | ✅ Installed |
+| Transcoding | **FFmpeg** (via fluent-ffmpeg) | ✅ Implemented |
 | Metadata | **TMDB API** (via moviedb-promise) | ✅ Implemented |
 | File watching | **chokidar** | ✅ Implemented |
-| Auth | **JWT tokens** | ❌ Not started |
+| Auth | **JWT** (@fastify/jwt) + **bcryptjs** | ✅ Implemented |
+| Rate limiting | **@fastify/rate-limit** | ✅ Implemented |
 
 ### Client (Frontend)
 
@@ -115,7 +122,7 @@ A self-hosted media server application that allows users to share their personal
 | Framework | **Angular 18 + TypeScript** (standalone components) | ✅ Implemented |
 | Build tool | **Angular CLI / esbuild** | ✅ Implemented |
 | Styling | **Tailwind CSS 3.4** | ✅ Implemented |
-| Video player | **Native HTML5 video** (hls.js planned for transcoding) | ✅ Basic |
+| Video player | **Native HTML5 video + hls.js** (direct play + HLS transcoding) | ✅ Implemented |
 | State management | **Angular Signals** (no external library) | ✅ Implemented |
 | Routing | **Angular Router** (lazy-loaded routes) | ✅ Implemented |
 | HTTP | **Angular HttpClient** | ✅ Implemented |
@@ -174,8 +181,20 @@ media_items
   - id, title, sort_title, type (movie/show/episode/song/album), year, genre
   - file_path, file_size, duration, codec_info
   - tmdb_id, poster_url, backdrop_url, description, rating, director
-  - is_favorite, in_watchlist
+  - is_favorite, in_watchlist (legacy, migrated to per-user tables)
   - added_at
+
+users
+  - id, username, password_hash, display_name, role (admin/member), created_at
+
+invite_codes
+  - code, created_by, used_by, created_at, used_at
+
+user_favorites
+  - user_id, media_item_id
+
+user_watchlist
+  - user_id, media_item_id
 
 watch_progress
   - user_id, media_item_id, position_seconds, completed, updated_at
@@ -196,9 +215,6 @@ collection_items
 ### Future Tables (for Group Sharing)
 
 ```
-users
-  - id, username, password_hash, display_name, created_at
-
 groups
   - id, name, invite_code, created_by, created_at
 
@@ -214,16 +230,18 @@ group_members
 - If the client supports the file's codec natively, stream the file directly via HTTP range requests
 - Minimal server load, best quality
 
-### HLS Transcoding (Fallback) ❌ Not started
-- If the client can't play the file's codec, transcode on-the-fly to HLS using FFmpeg
-- Segment into .ts chunks with an .m3u8 playlist
+### HLS Transcoding (Fallback) ✅ Implemented
+- If the client can't play the file's codec (non-H.264/AAC), transcode on-the-fly to HLS using FFmpeg
+- H.264 (libx264, veryfast preset, CRF 23) with AAC audio, 6-second segments
 - Client uses hls.js to play the adaptive stream
-- Cache transcoded segments to avoid re-encoding on seek
+- Session management with idle timeout (30 minutes) and automatic cleanup
+- Seekable transcoding with configurable video/audio track selection
+- Cache directory: `~/.cozystream/transcode-cache`
 
-### Subtitle Handling ❌ Not started
-- Extract embedded subtitles (SRT/ASS) from video files via FFmpeg
+### Subtitle Handling ✅ Implemented
+- Extract embedded subtitles (SRT/ASS/SSA/mov_text) from video files via FFmpeg
 - Serve as WebVTT for browser playback
-- Support external .srt files alongside video files
+- Support external subtitle files (.srt, .ass, .ssa, .vtt) alongside video files
 
 ---
 
@@ -235,15 +253,21 @@ cozystream-angular/
 │   ├── src/
 │   │   ├── index.ts           # Entry point, Fastify setup
 │   │   ├── routes/
+│   │   │   ├── auth.ts        # Registration, login, invite codes, user mgmt
 │   │   │   ├── library.ts     # Media CRUD, progress, favorites, TMDB
-│   │   │   ├── streaming.ts   # Video streaming endpoints
+│   │   │   ├── streaming.ts   # Direct play + HLS transcoding endpoints
 │   │   │   └── settings.ts    # App settings endpoints
+│   │   ├── middleware/
+│   │   │   └── auth.ts        # requireAuth() and requireAdmin() middleware
 │   │   ├── services/
 │   │   │   ├── scanner.ts     # File system scanning via chokidar
-│   │   │   └── metadata.ts    # TMDB API integration
+│   │   │   ├── metadata.ts    # TMDB API integration
+│   │   │   ├── transcoder.ts  # FFmpeg HLS transcoding with session mgmt
+│   │   │   └── probe.ts       # FFprobe codec detection
 │   │   ├── db/
 │   │   │   ├── schema.ts      # SQLite schema & migrations
-│   │   │   └── queries.ts     # Database access layer
+│   │   │   ├── queries.ts     # Database access layer
+│   │   │   └── auth-queries.ts # User & invite code queries
 │   │   └── utils/
 │   │       └── fileUtils.ts   # File path utilities
 │   └── package.json
@@ -251,30 +275,43 @@ cozystream-angular/
 ├── src/                       # Angular web app
 │   ├── app/
 │   │   ├── app.component.ts
-│   │   ├── app.routes.ts      # Lazy-loaded route config
+│   │   ├── app.routes.ts      # Lazy-loaded route config with guards
+│   │   ├── guards/
+│   │   │   └── auth.guard.ts  # authGuard, adminGuard, guestGuard
+│   │   ├── interceptors/
+│   │   │   └── auth.interceptor.ts  # JWT Bearer token + 401 handling
+│   │   ├── models/
+│   │   │   ├── media.model.ts # MediaItem, DisplaySettings, Collection types
+│   │   │   └── auth.model.ts  # User, AuthResponse, InviteCode types
 │   │   ├── pages/
+│   │   │   ├── login/         # Login page
+│   │   │   ├── register/      # Registration (first-user setup + invite code)
 │   │   │   ├── browse/        # Library grid view
 │   │   │   ├── detail/        # Media detail page
-│   │   │   ├── player/        # Video playback
+│   │   │   ├── player/        # Video playback (direct + HLS)
 │   │   │   ├── edit/          # Metadata editing
-│   │   │   └── settings/      # App settings
+│   │   │   └── settings/      # App settings (setup, layout, appearance, users)
 │   │   ├── components/
-│   │   │   ├── layout/        # App shell (header, nav)
-│   │   │   ├── media-card/    # Movie poster card
+│   │   │   ├── layout/        # App shell (header, nav, theme toggle)
+│   │   │   ├── media-card/    # Movie poster card (default + DVD case modes)
 │   │   │   ├── show-card/     # TV show card
 │   │   │   ├── season-card/   # Season card
 │   │   │   ├── episode-row/   # Episode list row
 │   │   │   ├── person-tile/   # Cast/crew tile
+│   │   │   ├── poster-image/  # Reusable poster image component
 │   │   │   ├── collection-row/           # Horizontal scroll row
 │   │   │   ├── filter-row/               # Filter-based collection row
 │   │   │   ├── collection-manager/       # Collection management modal
 │   │   │   ├── add-to-collection-modal/  # Add-to-collection modal
 │   │   │   └── season-poster-picker/     # Season poster selection
-│   │   └── services/
-│   │       ├── api.service.ts            # HTTP client for all API calls
-│   │       ├── display-settings.service.ts  # Theme, fonts, layout prefs
-│   │       ├── collections.service.ts    # Manual + filter collections
-│   │       └── row-order.service.ts      # Collection row ordering
+│   │   ├── services/
+│   │   │   ├── auth.service.ts           # JWT auth, user state, invite codes
+│   │   │   ├── api.service.ts            # HTTP client for all API calls
+│   │   │   ├── display-settings.service.ts  # Theme, fonts, layout prefs
+│   │   │   ├── collections.service.ts    # Manual + filter collections
+│   │   │   └── row-order.service.ts      # Collection row ordering
+│   │   └── utils/
+│   │       └── color.utils.ts # Accent color contrast checking
 │   ├── styles.css             # Global styles, Tailwind directives, themes
 │   ├── index.html
 │   └── main.ts
@@ -309,15 +346,18 @@ State is managed using Angular's built-in Signals API throughout:
 - No external state library (no NgRx, no Redux)
 
 ### Service Architecture
+- **AuthService** — JWT token management, login/register/logout, user state signals, invite code management
 - **ApiService** — centralized HTTP client wrapping all `/api` endpoints
 - **DisplaySettingsService** — reactive theme/font/layout preferences via signals, persisted to localStorage
 - **CollectionsService** — manages manual (API-backed) and filter-based (local) collections
 - **RowOrderService** — manages browse page collection row ordering
 
 ### Routing
-All page components are lazy-loaded:
+All page components are lazy-loaded with functional route guards:
 ```
-/ (LayoutComponent shell)
+/login → LoginComponent (guestGuard)
+/register → RegisterComponent (guestGuard)
+/ (LayoutComponent shell, authGuard)
 ├── '' → redirect to 'browse'
 ├── 'browse' → BrowseComponent
 ├── 'detail/:id' → DetailComponent
@@ -361,22 +401,29 @@ All page components are lazy-loaded:
 - ~~Customizable theming (dark/light, accent colors, fonts, layout)~~
 - ~~Responsive grid with adjustable card sizes~~
 - ~~Search functionality~~
+- ~~DVD Case browse mode (experimental 3D poster display with hover reveal)~~
+- ~~Configurable card spacing (horizontal gap between posters)~~
+- ~~Card text alignment (left/center)~~
+- ~~Accent color contrast checking with suggestions~~
 
-### Phase 2: Transcoding + Playback Polish (Next)
-- Add FFmpeg transcoding to HLS for incompatible formats
-- Integrate hls.js for HLS playback in the Angular player
-- Subtitle extraction and display (WebVTT)
-- Codec compatibility detection and warnings
-- Improved player UI (keyboard shortcuts, fullscreen behavior)
+### Phase 2: Transcoding + Playback Polish ✅ COMPLETE
+- ~~FFmpeg transcoding to HLS for incompatible formats~~
+- ~~hls.js integration for HLS playback~~
+- ~~Subtitle extraction (embedded + external) to WebVTT~~
+- ~~Codec compatibility detection (direct play vs transcode decision)~~
+- ~~Transcode session management with idle timeout and cleanup~~
+- Improved player UI (keyboard shortcuts, fullscreen behavior) — ongoing
 
-### Phase 3: Multi-User + Groups
-- User registration and JWT auth
-- Group creation, invite system
-- Unified library view across group members
-- Per-user watch history and profiles
-- Server-side user management
+### Phase 3: Multi-User ✅ MOSTLY COMPLETE
+- ~~User registration and JWT auth~~
+- ~~Invite code system (admin generates, new users redeem)~~
+- ~~Per-user favorites, watchlist, and watch progress~~
+- ~~Admin user management panel~~
+- ~~Route guards (auth, admin, guest)~~
+- ~~Rate limiting on auth endpoints~~
+- Group sharing (unified library across servers) — future
 
-### Phase 4: Packaging + Smart TV
+### Phase 4: Packaging + Smart TV (Next)
 - Package server into Electron or Tauri app with system tray
 - Document Tailscale setup for remote access
 - Build Samsung Tizen and/or LG webOS app using shared Angular components
@@ -388,6 +435,16 @@ All page components are lazy-loaded:
 
 | Method | Path | Description |
 |--------|------|-------------|
+| **Auth** | | |
+| POST | `/api/auth/register` | Register user (first user = admin, others need invite code) |
+| POST | `/api/auth/login` | Login, returns JWT token |
+| GET | `/api/auth/me` | Current user from token |
+| GET | `/api/auth/status` | Check if any users exist (for initial setup) |
+| POST | `/api/auth/invite-codes` | Generate invite code (admin) |
+| GET | `/api/auth/invite-codes` | List invite codes (admin) |
+| DELETE | `/api/auth/invite-codes/:code` | Delete invite code (admin) |
+| GET | `/api/auth/users` | List users (admin) |
+| **Library** | | |
 | GET | `/api/library` | All media items (optional `?type=` filter) |
 | GET | `/api/library/recent` | Recently added (24 items) |
 | GET | `/api/library/continue` | Continue watching items |
@@ -396,18 +453,27 @@ All page components are lazy-loaded:
 | POST | `/api/library/scan` | Trigger library scan |
 | GET | `/api/library/:id/progress` | Get watch progress |
 | POST | `/api/library/:id/progress` | Save watch progress |
-| POST | `/api/library/:id/favorite` | Toggle favorite |
-| POST | `/api/library/:id/watchlist` | Toggle watchlist |
+| POST | `/api/library/:id/favorite` | Toggle favorite (per-user) |
+| POST | `/api/library/:id/watchlist` | Toggle watchlist (per-user) |
 | GET | `/api/library/:id/credits` | Get credits (cast/crew) |
 | GET | `/api/library/:id/search-suggestions` | TMDB search |
 | POST | `/api/library/:id/apply-suggestion` | Apply TMDB metadata |
+| **TMDB** | | |
 | GET | `/api/tv/:tmdbId/season/:num/poster` | Season poster |
 | GET | `/api/tv/:tmdbId/season/:num/posters` | Season poster options |
 | GET | `/api/movie/:tmdbId/posters` | Movie poster options |
-| GET | `/api/stream/:id` | Stream video file |
+| **Streaming** | | |
+| GET | `/api/stream/:id` | Direct play via HTTP range requests |
+| GET | `/api/stream/:id/info` | Codec info + direct play/transcode decision |
+| GET | `/api/stream/:id/hls` | HLS playlist (starts transcode if needed) |
+| GET | `/api/stream/:id/hls/:file` | HLS .ts segment serving |
+| DELETE | `/api/stream/:id/hls` | Kill transcode session |
+| GET | `/api/stream/:id/subtitles/:track` | Extract subtitle track to WebVTT |
+| **Settings** | | |
 | GET | `/api/settings` | Get app settings |
 | POST | `/api/settings` | Save settings |
 | GET | `/api/settings/pick-folder` | Native folder picker |
+| **Collections** | | |
 | * | `/api/collections/*` | Collection CRUD |
 | GET | `/health` | Health check |
 

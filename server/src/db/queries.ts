@@ -165,6 +165,19 @@ export function deleteMediaItemByPath(filePath: string): void {
   getDB().prepare('DELETE FROM media_items WHERE file_path = ?').run(filePath)
 }
 
+export function getAllMediaFilePaths(): { id: number; file_path: string }[] {
+  return getDB()
+    .prepare('SELECT id, file_path FROM media_items WHERE file_path IS NOT NULL')
+    .all() as { id: number; file_path: string }[]
+}
+
+export function deleteMediaItemById(id: number): void {
+  const db = getDB()
+  db.prepare('DELETE FROM watch_progress WHERE media_item_id = ?').run(id)
+  db.prepare('DELETE FROM collection_items WHERE media_item_id = ?').run(id)
+  db.prepare('DELETE FROM media_items WHERE id = ?').run(id)
+}
+
 export function getWatchProgress(mediaItemId: number, userId = 1): WatchProgress | undefined {
   return getDB()
     .prepare('SELECT * FROM watch_progress WHERE media_item_id = ? AND user_id = ?')

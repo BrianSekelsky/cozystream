@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core'
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core'
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop'
 import { RouterOutlet, RouterLink, Router, NavigationEnd, ActivatedRoute } from '@angular/router'
-import { CommonModule } from '@angular/common'
+
 import { FormsModule } from '@angular/forms'
 import { filter } from 'rxjs/operators'
 import { DisplaySettingsService } from '../../services/display-settings.service'
@@ -8,10 +9,10 @@ import { AuthService } from '../../services/auth.service'
 import { CollectionManagerComponent } from '../collection-manager/collection-manager.component'
 
 @Component({
-  selector: 'app-layout',
-  standalone: true,
-  imports: [RouterOutlet, RouterLink, CommonModule, FormsModule, CollectionManagerComponent],
-  templateUrl: './layout.component.html',
+    selector: 'app-layout',
+    imports: [RouterOutlet, RouterLink, FormsModule, CollectionManagerComponent],
+    templateUrl: './layout.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LayoutComponent {
   ds = inject(DisplaySettingsService)
@@ -24,7 +25,7 @@ export class LayoutComponent {
 
   constructor() {
     this.router.events
-      .pipe(filter((e) => e instanceof NavigationEnd))
+      .pipe(filter((e) => e instanceof NavigationEnd), takeUntilDestroyed())
       .subscribe((e: any) => {
         this.isOnBrowse.set(e.urlAfterRedirects === '/browse' || e.urlAfterRedirects.startsWith('/browse'))
         if (!e.urlAfterRedirects.startsWith('/browse')) {

@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { upsertMediaItem, deleteMediaItemByPath, getSetting } from '../db/queries'
+import { upsertMediaItem, deleteMediaItemByPath, getSetting, getAllMediaFilePaths, deleteMediaItemById } from '../db/queries'
 import { fetchMovieMetadata, fetchTVMetadata } from './metadata'
 import { probeFile, findExternalSubtitles } from './probe'
 import {
@@ -33,6 +33,12 @@ export async function scanLibrary(libraryPaths: string[]): Promise<{ scanned: nu
       scanned += results.scanned
       errors += results.errors
     }
+
+    // Remove DB entries whose files no longer exist on disk
+    const removed = cleanupStaleEntries()
+    if (removed > 0) {
+      console.log(`[scanner] Removed ${removed} stale entries (files no longer on disk)`)
+    }
   } finally {
     scanInProgress = false
   }
@@ -55,6 +61,9 @@ async function scanDirectory(
   const entries = fs.readdirSync(dirPath, { withFileTypes: true })
 
   for (const entry of entries) {
+    // Skip macOS resource fork / metadata files (._filename)
+    if (entry.name.startsWith('._')) continue
+
     const fullPath = path.join(dirPath, entry.name)
 
     if (entry.isDirectory()) {
@@ -159,6 +168,19 @@ async function indexVideoFile(filePath: string): Promise<void> {
       director: meta?.director ?? null,
     })
   }
+}
+
+function cleanupStaleEntries(): number {
+  const allItems = getAllMediaFilePaths()
+  let removed = 0
+  for (const item of allItems) {
+    if (!fs.existsSync(item.file_path)) {
+      console.log(`[scanner] Removing stale entry: ${item.file_path}`)
+      deleteMediaItemById(item.id)
+      removed++
+    }
+  }
+  return removed
 }
 
 export function getLibraryPaths(): string[] {

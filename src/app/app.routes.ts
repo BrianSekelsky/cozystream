@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router'
 import { LayoutComponent } from './components/layout/layout.component'
-import { authGuard, guestGuard } from './guards/auth.guard'
+import { authGuard, adminGuard, guestGuard } from './guards/auth.guard'
 
 export const routes: Routes = [
   {
@@ -33,6 +33,7 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./pages/settings/settings.component').then((m) => m.SettingsComponent),
       },

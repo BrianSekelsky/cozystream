@@ -1,5 +1,5 @@
-import { Component, Input, inject } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, Input, inject } from '@angular/core'
+
 import { Router } from '@angular/router'
 import { MediaItem } from '../../models/media.model'
 
@@ -14,10 +14,10 @@ function extractEpisodeTitle(title: string): string {
 }
 
 @Component({
-  selector: 'app-episode-row',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './episode-row.component.html',
+    selector: 'app-episode-row',
+    imports: [],
+    templateUrl: './episode-row.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EpisodeRowComponent {
   @Input({ required: true }) episode!: MediaItem

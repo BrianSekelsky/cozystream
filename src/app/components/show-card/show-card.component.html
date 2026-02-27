@@ -2,7 +2,7 @@
   <!-- Poster -->
   <div [class]="'relative overflow-hidden w-full aspect-[2/3] ' + posterCornerClass()">
     @if (show.posterUrl) {
-      <img [src]="show.posterUrl" [alt]="show.name" class="w-full h-full object-cover" />
+      <img loading="lazy" [src]="show.posterUrl" [alt]="show.name" class="w-full h-full object-cover" />
     } @else {
       <div class="w-full h-full bg-white/10 flex items-center justify-center">
         <svg class="w-10 h-10 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">

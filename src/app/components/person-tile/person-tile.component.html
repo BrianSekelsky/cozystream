@@ -1,7 +1,7 @@
 <div [class]="'flex-shrink-0 min-w-0 ' + sizeClass()">
   <div [class]="'overflow-hidden bg-white/10 ' + imgSizeClass() + ' ' + cornerClass()">
     @if (profileUrl) {
-      <img [src]="profileUrl" [alt]="name" class="w-full h-full object-cover" />
+      <img loading="lazy" [src]="profileUrl" [alt]="name" class="w-full h-full object-cover" />
     } @else {
       <div class="w-full h-full flex items-center justify-center bg-white/5 text-white/30 text-sm font-medium">
         {{ initials() }}

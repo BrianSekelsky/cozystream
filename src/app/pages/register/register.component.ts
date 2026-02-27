@@ -1,13 +1,13 @@
-import { Component, inject, signal, OnInit } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core'
+
 import { FormsModule } from '@angular/forms'
 import { Router, RouterModule } from '@angular/router'
 import { AuthService } from '../../services/auth.service'
 
 @Component({
-  standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
-  templateUrl: './register.component.html',
+    imports: [FormsModule, RouterModule],
+    templateUrl: './register.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterComponent implements OnInit {
   private auth = inject(AuthService)

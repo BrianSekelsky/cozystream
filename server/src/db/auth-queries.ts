@@ -23,6 +23,7 @@ export interface InviteCode {
   used_by: number | null
   created_at: string
   used_at: string | null
+  expires_at: string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -72,7 +73,7 @@ export function getAllUsers(): SafeUser[] {
 
 export function createInviteCode(code: string, createdBy: number): void {
   getDB()
-    .prepare('INSERT INTO invite_codes (code, created_by) VALUES (?, ?)')
+    .prepare("INSERT INTO invite_codes (code, created_by, expires_at) VALUES (?, ?, datetime('now', '+48 hours'))")
     .run(code, createdBy)
 }
 

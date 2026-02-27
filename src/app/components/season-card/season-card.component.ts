@@ -1,13 +1,13 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter } from '@angular/core'
+
 import { DisplaySettingsService } from '../../services/display-settings.service'
 import { inject } from '@angular/core'
 
 @Component({
-  selector: 'app-season-card',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './season-card.component.html',
+    selector: 'app-season-card',
+    imports: [],
+    templateUrl: './season-card.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SeasonCardComponent {
   @Input({ required: true }) season!: number

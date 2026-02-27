@@ -1,14 +1,14 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter } from '@angular/core'
+
 import { ShowGroup } from '../../models/media.model'
 import { DisplaySettingsService } from '../../services/display-settings.service'
 import { inject } from '@angular/core'
 
 @Component({
-  selector: 'app-show-card',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './show-card.component.html',
+    selector: 'app-show-card',
+    imports: [],
+    templateUrl: './show-card.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ShowCardComponent {
   @Input({ required: true }) show!: ShowGroup

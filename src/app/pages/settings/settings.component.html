@@ -77,7 +77,7 @@
     <section class="mb-10">
       <h2 class="text-base font-semibold mb-1 text-white">TMDB API Key</h2>
       <p class="text-sm text-white/50 mb-4">Required for fetching movie metadata and poster art.</p>
-      <input type="password" placeholder="Enter your TMDB API key"
+      <input type="password" [placeholder]="hasTmdbKey() ? 'Key configured — enter new key to replace' : 'Enter your TMDB API key'"
         [(ngModel)]="tmdbKey"
         class="w-full bg-surface-overlay text-white placeholder-white/30 border border-white/10 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-white/30" />
     </section>

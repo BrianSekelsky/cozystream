@@ -3,6 +3,7 @@
     "target": "http://localhost:3001",
     "secure": false,
     "changeOrigin": true,
+    "cookieDomainRewrite": "",
     "logLevel": "warn",
     "proxyTimeout": 120000,
     "timeout": 120000

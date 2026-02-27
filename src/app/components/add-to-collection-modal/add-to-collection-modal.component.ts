@@ -1,14 +1,14 @@
-import { Component, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core'
+
 import { FormsModule } from '@angular/forms'
 import { MediaItem, Collection } from '../../models/media.model'
 import { ApiService } from '../../services/api.service'
 
 @Component({
-  selector: 'app-add-to-collection-modal',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './add-to-collection-modal.component.html',
+    selector: 'app-add-to-collection-modal',
+    imports: [FormsModule],
+    templateUrl: './add-to-collection-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AddToCollectionModalComponent implements OnInit {
   @Input({ required: true }) item!: MediaItem

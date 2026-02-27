@@ -15,6 +15,26 @@ export interface MetadataResult {
   duration: number | null
 }
 
+// ---------------------------------------------------------------------------
+// In-memory cache with TTL — avoids redundant TMDB API calls during scans
+// ---------------------------------------------------------------------------
+const CACHE_TTL = 24 * 60 * 60 * 1000 // 24 hours
+const cache = new Map<string, { data: any; expiresAt: number }>()
+
+function cacheGet<T>(key: string): T | undefined {
+  const entry = cache.get(key)
+  if (!entry) return undefined
+  if (Date.now() > entry.expiresAt) {
+    cache.delete(key)
+    return undefined
+  }
+  return entry.data as T
+}
+
+function cacheSet(key: string, data: any): void {
+  cache.set(key, { data, expiresAt: Date.now() + CACHE_TTL })
+}
+
 const IMAGE_BASE = 'https://image.tmdb.org/t/p'
 
 function imgUrl(size: string, p?: string | null): string | null {
@@ -36,15 +56,23 @@ async function tryMovieSearch(
   year?: number | null
 ): Promise<MetadataResult | null> {
   if (!query.trim()) return null
+
+  const cacheKey = `movie:${query}:${year ?? ''}`
+  const cached = cacheGet<MetadataResult | null>(cacheKey)
+  if (cached !== undefined) return cached
+
   try {
     const { results } = await client.searchMovie({ query, year: year ?? undefined })
     const hit = results?.[0]
-    if (!hit?.id) return null
+    if (!hit?.id) {
+      cacheSet(cacheKey, null)
+      return null
+    }
 
     const details = await client.movieInfo({ id: hit.id, append_to_response: 'credits' })
     const crew: Array<{ job: string; name: string }> = (details as any).credits?.crew ?? []
     const director = crew.filter((c) => c.job === 'Director').map((c) => c.name).join(', ') || null
-    return {
+    const result: MetadataResult = {
       title: details.title ?? details.original_title ?? query,
       tmdbId: String(details.id),
       posterUrl: imgUrl('w500', details.poster_path),
@@ -56,6 +84,8 @@ async function tryMovieSearch(
       duration: details.runtime ? details.runtime * 60 : null,
       director,
     }
+    cacheSet(cacheKey, result)
+    return result
   } catch {
     return null
   }
@@ -174,13 +204,21 @@ async function tryTVSearch(
   query: string
 ): Promise<MetadataResult | null> {
   if (!query.trim()) return null
+
+  const cacheKey = `tv:${query}`
+  const cached = cacheGet<MetadataResult | null>(cacheKey)
+  if (cached !== undefined) return cached
+
   try {
     const { results } = await client.searchTv({ query })
     const hit = results?.[0]
-    if (!hit?.id) return null
+    if (!hit?.id) {
+      cacheSet(cacheKey, null)
+      return null
+    }
 
     const details = await client.tvInfo({ id: hit.id })
-    return {
+    const result: MetadataResult = {
       title: details.name ?? details.original_name ?? query,
       tmdbId: String(details.id),
       posterUrl: imgUrl('w500', details.poster_path),
@@ -192,6 +230,8 @@ async function tryTVSearch(
       director: null,
       duration: null,
     }
+    cacheSet(cacheKey, result)
+    return result
   } catch {
     return null
   }

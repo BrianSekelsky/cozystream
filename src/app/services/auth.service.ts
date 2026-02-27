@@ -1,50 +1,47 @@
-import { Injectable, inject, signal, computed } from '@angular/core'
+import { Injectable, inject, signal, computed, OnDestroy } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { Router } from '@angular/router'
 import { Observable, tap } from 'rxjs'
 import type { User, AuthResponse, AuthStatus, InviteCode } from '../models/auth.model'
 
-const TOKEN_KEY = 'cozystream:token'
 const USER_KEY = 'cozystream:user'
+const REFRESH_INTERVAL = 6 * 60 * 60 * 1000 // 6 hours
 
 @Injectable({ providedIn: 'root' })
-export class AuthService {
+export class AuthService implements OnDestroy {
   private http = inject(HttpClient)
   private router = inject(Router)
   private base = '/api/auth'
+  private refreshTimer?: ReturnType<typeof setInterval>
 
   private _user = signal<User | null>(this.loadUser())
-  private _token = signal<string | null>(this.loadToken())
 
   readonly user = this._user.asReadonly()
-  readonly token = this._token.asReadonly()
-  readonly isLoggedIn = computed(() => !!this._token())
+  readonly isLoggedIn = computed(() => !!this._user())
   readonly isAdmin = computed(() => this._user()?.role === 'admin')
 
   constructor() {
-    // Sync the cookie with the stored token so <video src=""> requests are authenticated
-    const token = this._token()
-    if (token) {
-      document.cookie = `cozystream_token=${token}; path=/; SameSite=Strict`
-    }
     this.validateToken()
+    this.startRefreshTimer()
+  }
+
+  ngOnDestroy(): void {
+    if (this.refreshTimer) clearInterval(this.refreshTimer)
   }
 
   // --- Public auth ---
 
-  /** Verify the stored token is still valid and refresh user data from the server */
+  /** Verify the stored session is still valid and refresh user data from the server */
   private validateToken(): void {
-    if (!this._token()) return
+    if (!this._user()) return
     this.http.get<User>(`${this.base}/me`).subscribe({
       next: (user) => {
         this._user.set(user)
         localStorage.setItem(USER_KEY, JSON.stringify(user))
       },
       error: () => {
-        // Token is invalid or expired — clear auth state
-        this._token.set(null)
+        // Cookie is invalid or expired — clear auth state
         this._user.set(null)
-        localStorage.removeItem(TOKEN_KEY)
         localStorage.removeItem(USER_KEY)
       },
     })
@@ -77,16 +74,11 @@ export class AuthService {
   }
 
   logout(): void {
-    this._token.set(null)
+    // Clear the httpOnly cookie on the server
+    this.http.post(`${this.base}/logout`, {}).subscribe({ error: () => {} })
     this._user.set(null)
-    localStorage.removeItem(TOKEN_KEY)
     localStorage.removeItem(USER_KEY)
-    document.cookie = 'cozystream_token=; path=/; max-age=0'
     this.router.navigate(['/login'])
-  }
-
-  getToken(): string | null {
-    return this._token()
   }
 
   // --- Admin: invite codes ---
@@ -112,20 +104,8 @@ export class AuthService {
   // --- Internal ---
 
   private saveAuth(response: AuthResponse): void {
-    this._token.set(response.token)
     this._user.set(response.user)
-    localStorage.setItem(TOKEN_KEY, response.token)
     localStorage.setItem(USER_KEY, JSON.stringify(response.user))
-    // Set a cookie so <video src=""> requests include the token
-    document.cookie = `cozystream_token=${response.token}; path=/; SameSite=Strict`
-  }
-
-  private loadToken(): string | null {
-    try {
-      return localStorage.getItem(TOKEN_KEY)
-    } catch {
-      return null
-    }
   }
 
   private loadUser(): User | null {
@@ -135,5 +115,25 @@ export class AuthService {
     } catch {
       return null
     }
+  }
+
+  /** Periodically call /auth/me to refresh the httpOnly cookie before it expires */
+  private startRefreshTimer(): void {
+    if (this.refreshTimer) clearInterval(this.refreshTimer)
+    this.refreshTimer = setInterval(() => {
+      if (!this._user()) return
+      this.http.get<User>(`${this.base}/me`).subscribe({
+        next: (user) => {
+          this._user.set(user)
+          localStorage.setItem(USER_KEY, JSON.stringify(user))
+        },
+        error: () => {
+          // Token expired and refresh failed — log out
+          this._user.set(null)
+          localStorage.removeItem(USER_KEY)
+          this.router.navigate(['/login'])
+        },
+      })
+    }, REFRESH_INTERVAL)
   }
 }

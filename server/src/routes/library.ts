@@ -55,6 +55,7 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   // GET /api/library/:id
   fastify.get<{ Params: { id: string } }>('/library/:id', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const userId = (request.user as any).id
     const item = getMediaItemByIdForUser(id, userId)
     if (!item) return reply.status(404).send({ error: 'Not found' })
@@ -76,8 +77,9 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   })
 
   // GET /api/library/:id/progress
-  fastify.get<{ Params: { id: string } }>('/library/:id/progress', async (request) => {
+  fastify.get<{ Params: { id: string } }>('/library/:id/progress', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const userId = (request.user as any).id
     return getWatchProgress(id, userId) ?? { position_seconds: 0, completed: false }
   })
@@ -86,8 +88,9 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.post<{
     Params: { id: string }
     Body: { position_seconds: number; completed?: boolean }
-  }>('/library/:id/progress', async (request) => {
+  }>('/library/:id/progress', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const userId = (request.user as any).id
     const { position_seconds, completed = false } = request.body
     upsertWatchProgress(id, position_seconds, completed, userId)
@@ -100,6 +103,7 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     Body: Record<string, unknown>
   }>('/library/:id', { preHandler: requireAdmin(fastify) }, async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
     // If title changed, regenerate sort_title unless caller supplied one
@@ -114,6 +118,7 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   // POST /api/library/:id/favorite — toggle favorite flag (per-user)
   fastify.post<{ Params: { id: string } }>('/library/:id/favorite', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const userId = (request.user as any).id
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
@@ -124,6 +129,7 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   // POST /api/library/:id/watchlist — toggle watchlist flag (per-user)
   fastify.post<{ Params: { id: string } }>('/library/:id/watchlist', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const userId = (request.user as any).id
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
@@ -137,6 +143,7 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     Querystring: { q?: string; year?: string }
   }>('/library/:id/search-suggestions', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
     const query = request.query.q ?? item.title
@@ -151,6 +158,7 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
     Body: { tmdb_id: string }
   }>('/library/:id/apply-suggestion', { preHandler: requireAdmin(fastify) }, async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
     const meta = await fetchMovieMetadataByTmdbId(request.body.tmdb_id)
@@ -172,6 +180,7 @@ export async function libraryRoutes(fastify: FastifyInstance): Promise<void> {
   // GET /api/library/:id/credits — director, top cast, all genres from TMDB
   fastify.get<{ Params: { id: string } }>('/library/:id/credits', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const item = getMediaItemById(id)
     if (!item) return reply.status(404).send({ error: 'Not found' })
     if (!item.tmdb_id) return reply.status(404).send({ error: 'No TMDB ID' })

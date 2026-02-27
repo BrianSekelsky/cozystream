@@ -5,13 +5,9 @@ import { AuthService } from '../services/auth.service'
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService)
-  const token = auth.getToken()
 
-  if (token) {
-    req = req.clone({
-      setHeaders: { Authorization: `Bearer ${token}` },
-    })
-  }
+  // Ensure cookies are sent with every request (needed for httpOnly auth cookie via dev proxy)
+  req = req.clone({ withCredentials: true })
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {

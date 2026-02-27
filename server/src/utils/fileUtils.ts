@@ -213,6 +213,18 @@ export function isEpisodeFile(filePath: string): boolean {
   return /[Ss]\d{1,2}[Ee]\d{1,2}/.test(path.basename(filePath))
 }
 
+/**
+ * Check that a file path is within one of the configured library directories.
+ * Prevents path traversal attacks when serving media files.
+ */
+export function isPathWithinLibraries(filePath: string, libraryPaths: string[]): boolean {
+  const resolved = path.resolve(filePath)
+  return libraryPaths.some(lib => {
+    const resolvedLib = path.resolve(lib)
+    return resolved.startsWith(resolvedLib + path.sep) || resolved === resolvedLib
+  })
+}
+
 export function makeSortTitle(title: string): string {
   return title
     .toLowerCase()

@@ -1,5 +1,5 @@
-import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy } from '@angular/core'
+
 import { FormsModule } from '@angular/forms'
 import { Router, ActivatedRoute } from '@angular/router'
 import { Subscription } from 'rxjs'
@@ -37,14 +37,19 @@ type Filter = 'movie' | 'episode'
 type TvView = 'shows' | 'seasons' | 'episodes'
 
 @Component({
-  selector: 'app-browse',
-  standalone: true,
-  imports: [
-    CommonModule, FormsModule,
-    MediaCardComponent, CollectionRowComponent, FilterRowComponent,
-    ShowCardComponent, SeasonCardComponent, EpisodeRowComponent, SeasonPosterPickerComponent,
-  ],
-  templateUrl: './browse.component.html',
+    selector: 'app-browse',
+    imports: [
+    FormsModule,
+    MediaCardComponent,
+    CollectionRowComponent,
+    FilterRowComponent,
+    ShowCardComponent,
+    SeasonCardComponent,
+    EpisodeRowComponent,
+    SeasonPosterPickerComponent
+],
+    templateUrl: './browse.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BrowseComponent implements OnInit, OnDestroy {
   ds = inject(DisplaySettingsService)

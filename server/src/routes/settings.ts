@@ -63,13 +63,13 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
     }
   })
 
-  // GET /api/settings
+  // GET /api/settings — never return the actual API key to the frontend
   fastify.get('/settings', async () => {
     const rawPaths = getSetting('library_paths')
     const library_paths: string[] = rawPaths ? JSON.parse(rawPaths) : []
-    const tmdb_api_key = getSetting('tmdb_api_key') ?? ''
+    const hasKey = !!getSetting('tmdb_api_key')
 
-    return { library_paths, tmdb_api_key }
+    return { library_paths, tmdb_api_key: hasKey ? '••••••••' : '', has_tmdb_api_key: hasKey }
   })
 
   // POST /api/settings

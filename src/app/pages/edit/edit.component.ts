@@ -1,15 +1,15 @@
-import { Component, inject, signal, OnInit } from '@angular/core'
-import { CommonModule, Location } from '@angular/common'
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core'
+import { Location } from '@angular/common';
 import { FormsModule } from '@angular/forms'
 import { ActivatedRoute, Router } from '@angular/router'
 import { ApiService } from '../../services/api.service'
 import { MediaItem, MovieSuggestion, SeasonPosterOption } from '../../models/media.model'
 
 @Component({
-  selector: 'app-edit',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './edit.component.html',
+    selector: 'app-edit',
+    imports: [FormsModule],
+    templateUrl: './edit.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditComponent implements OnInit {
   private route = inject(ActivatedRoute)

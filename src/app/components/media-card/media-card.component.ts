@@ -1,5 +1,5 @@
-import { Component, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, inject, signal, OnInit } from '@angular/core'
+
 import { Router } from '@angular/router'
 import { MediaItem } from '../../models/media.model'
 import { ApiService } from '../../services/api.service'
@@ -7,10 +7,10 @@ import { DisplaySettingsService } from '../../services/display-settings.service'
 import { AddToCollectionModalComponent } from '../add-to-collection-modal/add-to-collection-modal.component'
 
 @Component({
-  selector: 'app-media-card',
-  standalone: true,
-  imports: [CommonModule, AddToCollectionModalComponent],
-  templateUrl: './media-card.component.html',
+    selector: 'app-media-card',
+    imports: [AddToCollectionModalComponent],
+    templateUrl: './media-card.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MediaCardComponent implements OnInit {
   @Input({ required: true }) item!: MediaItem

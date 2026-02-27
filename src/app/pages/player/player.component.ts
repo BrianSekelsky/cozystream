@@ -1,20 +1,19 @@
 import {
-  Component, inject, signal, computed, OnInit, OnDestroy,
+  Component, ChangeDetectionStrategy, inject, signal, computed, OnInit, OnDestroy,
   ElementRef, ViewChild,
 } from '@angular/core'
 import { ActivatedRoute, Router } from '@angular/router'
-import { Location, CommonModule } from '@angular/common'
+import { Location, CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service'
-import { AuthService } from '../../services/auth.service'
 import { DisplaySettingsService } from '../../services/display-settings.service'
 import { StreamInfo, PlayerSubtitleTrack } from '../../models/media.model'
 import Hls from 'hls.js'
 
 @Component({
-  selector: 'app-player',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './player.component.html',
+    selector: 'app-player',
+    imports: [CommonModule],
+    templateUrl: './player.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PlayerComponent implements OnInit, OnDestroy {
   @ViewChild('videoEl') videoEl?: ElementRef<HTMLVideoElement>
@@ -24,7 +23,6 @@ export class PlayerComponent implements OnInit, OnDestroy {
   private router = inject(Router)
   private location = inject(Location)
   private api = inject(ApiService)
-  private auth = inject(AuthService)
   ds = inject(DisplaySettingsService)
 
   // ── Stream state ────────────────────────────────────────────────────────
@@ -78,6 +76,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
   private startPosition = 0
   private knownDuration: number | null = null
   private savedTheme: string | null = null
+  private currentSubtitleBlobUrl: string | null = null
 
   // ── Lifecycle ───────────────────────────────────────────────────────────
 
@@ -151,6 +150,12 @@ export class PlayerComponent implements OnInit, OnDestroy {
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('fullscreenchange', this.onFullscreenChange)
 
+    // Revoke subtitle blob URL
+    if (this.currentSubtitleBlobUrl) {
+      URL.revokeObjectURL(this.currentSubtitleBlobUrl)
+      this.currentSubtitleBlobUrl = null
+    }
+
     // Restore the user's theme
     if (this.savedTheme) {
       document.documentElement.setAttribute('data-theme', this.savedTheme)
@@ -175,12 +180,9 @@ export class PlayerComponent implements OnInit, OnDestroy {
         return
       }
 
-      const token = this.auth.getToken()
       this.hls = new Hls({
         xhrSetup: (xhr) => {
-          if (token) {
-            xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-          }
+          xhr.withCredentials = true
         },
       })
 
@@ -381,6 +383,12 @@ export class PlayerComponent implements OnInit, OnDestroy {
     const existingTracks = video.querySelectorAll('track')
     existingTracks.forEach(t => t.remove())
 
+    // Revoke previous blob URL to prevent memory leak
+    if (this.currentSubtitleBlobUrl) {
+      URL.revokeObjectURL(this.currentSubtitleBlobUrl)
+      this.currentSubtitleBlobUrl = null
+    }
+
     // Disable all existing text tracks
     for (let i = 0; i < video.textTracks.length; i++) {
       video.textTracks[i].mode = 'disabled'
@@ -393,11 +401,8 @@ export class PlayerComponent implements OnInit, OnDestroy {
 
     // Fetch the VTT content and create a blob URL
     // (avoids cross-origin issues with <track> element src)
-    const subToken = this.auth.getToken()
     const subUrl = this.api.subtitleUrl(this.mediaId, trackIndex)
-    const headers: Record<string, string> = {}
-    if (subToken) headers['Authorization'] = `Bearer ${subToken}`
-    fetch(subUrl, { headers })
+    fetch(subUrl, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error(`Subtitle fetch failed: ${res.status}`)
         return res.text()
@@ -405,6 +410,7 @@ export class PlayerComponent implements OnInit, OnDestroy {
       .then(vttText => {
         const blob = new Blob([vttText], { type: 'text/vtt' })
         const blobUrl = URL.createObjectURL(blob)
+        this.currentSubtitleBlobUrl = blobUrl
 
         const track = document.createElement('track')
         track.kind = 'subtitles'

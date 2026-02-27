@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core'
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core'
 import { CommonModule } from '@angular/common'
 import { FormsModule } from '@angular/forms'
 import { ApiService } from '../../services/api.service'
@@ -29,10 +29,10 @@ const ACCENT_COLORS = [
 ]
 
 @Component({
-  selector: 'app-settings',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './settings.component.html',
+    selector: 'app-settings',
+    imports: [CommonModule, FormsModule],
+    templateUrl: './settings.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SettingsComponent implements OnInit {
   ds = inject(DisplaySettingsService)
@@ -85,6 +85,7 @@ export class SettingsComponent implements OnInit {
     { value: 'center' as const, label: 'Center' },
   ]
   settings = signal<AppSettings>({ library_paths: [], tmdb_api_key: '' })
+  hasTmdbKey = signal(false)
   tmdbKey = ''
   picking = signal(false)
   saving = signal(false)
@@ -99,9 +100,10 @@ export class SettingsComponent implements OnInit {
 
   ngOnInit() {
     this.api.getSettings().subscribe({
-      next: (s) => {
+      next: (s: any) => {
         this.settings.set(s)
-        this.tmdbKey = s.tmdb_api_key
+        this.hasTmdbKey.set(!!s.has_tmdb_api_key)
+        this.tmdbKey = ''
         this.originalPaths = [...s.library_paths]
       },
     })
@@ -197,7 +199,11 @@ export class SettingsComponent implements OnInit {
       currentPaths.length !== this.originalPaths.length ||
       currentPaths.some((p, i) => p !== this.originalPaths[i])
 
-    const payload: Partial<AppSettings> = { tmdb_api_key: this.tmdbKey }
+    const payload: Partial<AppSettings> = {}
+    // Only send API key if user typed a new one (empty field = keep existing)
+    if (this.tmdbKey) {
+      payload.tmdb_api_key = this.tmdbKey
+    }
     if (pathsChanged) {
       payload.library_paths = currentPaths
     }
@@ -207,6 +213,8 @@ export class SettingsComponent implements OnInit {
         this.messageType.set('success')
         this.message.set(pathsChanged ? 'Settings saved. Library scan started.' : 'Settings saved.')
         this.originalPaths = [...currentPaths]
+        if (this.tmdbKey) this.hasTmdbKey.set(true)
+        this.tmdbKey = ''
         this.saving.set(false)
       },
       error: (err) => {

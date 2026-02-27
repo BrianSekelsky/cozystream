@@ -17,6 +17,8 @@
           type="text"
           [(ngModel)]="username"
           name="username"
+          required
+          minlength="3"
           autocomplete="username"
           class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:border-white/30"
           placeholder="Enter username"
@@ -30,6 +32,9 @@
           type="password"
           [(ngModel)]="password"
           name="password"
+          required
+          minlength="12"
+          maxlength="72"
           autocomplete="current-password"
           class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:border-white/30"
           placeholder="Enter password"

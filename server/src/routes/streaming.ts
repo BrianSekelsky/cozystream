@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { getMediaItemById } from '../db/queries'
-import { getMimeType } from '../utils/fileUtils'
+import { getMimeType, isPathWithinLibraries } from '../utils/fileUtils'
+import { getLibraryPaths } from '../services/scanner'
 import { getOrCreateSession, getSession, killSession } from '../services/transcoder'
 import type { ProbeResult, ExternalSubtitle } from '../services/probe'
 import { execFile } from 'child_process'
@@ -40,6 +41,7 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.get<{ Params: { id: string } }>('/stream/:id', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const item = getMediaItemById(id)
 
     if (!item || !item.file_path) {
@@ -47,6 +49,10 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
     }
 
     const filePath = item.file_path
+
+    if (!isPathWithinLibraries(filePath, getLibraryPaths())) {
+      return reply.status(403).send({ error: 'Access denied' })
+    }
 
     if (!fs.existsSync(filePath)) {
       return reply.status(404).send({ error: 'File not found on disk' })
@@ -97,6 +103,7 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.get<{ Params: { id: string } }>('/stream/:id/info', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const item = getMediaItemById(id)
 
     if (!item) {
@@ -137,10 +144,15 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
     Querystring: { start?: string; audio?: string }
   }>('/stream/:id/hls', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     const item = getMediaItemById(id)
 
     if (!item?.file_path) {
       return reply.status(404).send({ error: 'Not found' })
+    }
+
+    if (!isPathWithinLibraries(item.file_path, getLibraryPaths())) {
+      return reply.status(403).send({ error: 'Access denied' })
     }
 
     if (!fs.existsSync(item.file_path)) {
@@ -172,6 +184,7 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
     '/stream/:id/hls/:file',
     async (request, reply) => {
       const id = parseInt(request.params.id)
+      if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
       const session = getSession(id)
 
       if (!session) {
@@ -199,6 +212,7 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
 
   fastify.delete<{ Params: { id: string } }>('/stream/:id/hls', async (request, reply) => {
     const id = parseInt(request.params.id)
+    if (isNaN(id)) return reply.status(400).send({ error: 'Invalid id' })
     killSession(id)
     return reply.send({ ok: true })
   })
@@ -210,10 +224,15 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
     async (request, reply) => {
       const id = parseInt(request.params.id)
       const trackIndex = parseInt(request.params.trackIndex)
+      if (isNaN(id) || isNaN(trackIndex)) return reply.status(400).send({ error: 'Invalid id or track index' })
       const item = getMediaItemById(id)
 
       if (!item?.file_path) {
         return reply.status(404).send({ error: 'Not found' })
+      }
+
+      if (!isPathWithinLibraries(item.file_path, getLibraryPaths())) {
+        return reply.status(403).send({ error: 'Access denied' })
       }
 
       const codecInfo: (ProbeResult & { externalSubtitles: ExternalSubtitle[] }) | null =
@@ -229,6 +248,10 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
         const ext = codecInfo.externalSubtitles?.[extIdx]
         if (!ext || !fs.existsSync(ext.filePath)) {
           return reply.status(404).send({ error: 'External subtitle not found' })
+        }
+
+        if (!isPathWithinLibraries(ext.filePath, getLibraryPaths())) {
+          return reply.status(403).send({ error: 'Access denied' })
         }
 
         // VTT files can be served directly

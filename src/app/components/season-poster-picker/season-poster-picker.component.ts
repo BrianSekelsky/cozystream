@@ -1,13 +1,13 @@
-import { Component, inject, signal, Input, Output, EventEmitter, OnInit } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, inject, signal, Input, Output, EventEmitter, OnInit } from '@angular/core'
+
 import { ApiService } from '../../services/api.service'
 import { SeasonPosterOption } from '../../models/media.model'
 
 @Component({
-  selector: 'app-season-poster-picker',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './season-poster-picker.component.html',
+    selector: 'app-season-poster-picker',
+    imports: [],
+    templateUrl: './season-poster-picker.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SeasonPosterPickerComponent implements OnInit {
   @Input({ required: true }) tmdbId!: string

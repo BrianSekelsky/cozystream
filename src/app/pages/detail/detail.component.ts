@@ -1,7 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, inject, signal, OnInit } from '@angular/core'
+
 import { ActivatedRoute, Router } from '@angular/router'
 import { Location } from '@angular/common'
+import { forkJoin } from 'rxjs'
 import { ApiService } from '../../services/api.service'
 import { DisplaySettingsService } from '../../services/display-settings.service'
 import { MediaItem, WatchProgress, CreditsResult } from '../../models/media.model'
@@ -22,10 +23,10 @@ function formatFileSize(bytes: number | null): string {
 
 
 @Component({
-  selector: 'app-detail',
-  standalone: true,
-  imports: [CommonModule, PersonTileComponent],
-  templateUrl: './detail.component.html',
+    selector: 'app-detail',
+    imports: [PersonTileComponent],
+    templateUrl: './detail.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DetailComponent implements OnInit {
   ds = inject(DisplaySettingsService)
@@ -63,32 +64,35 @@ export class DetailComponent implements OnInit {
 
   ngOnInit() {
     const id = Number(this.route.snapshot.paramMap.get('id'))
-    Promise.all([
-      this.api.getMediaById(id).toPromise(),
-      this.api.getProgress(id).toPromise(),
-    ]).then(([media, prog]) => {
-      if (media) {
-        this.item.set(media)
-        const pos = prog?.position_seconds ?? 0
-        this.resumePosition.set(pos)
-        this.canResume.set(pos > 10)
-        if (media.duration && pos > 10) {
-          this.progressPercent.set(Math.min(100, (pos / media.duration) * 100))
-        }
-        this.genres.set(media.genre ? [media.genre] : [])
+    forkJoin([
+      this.api.getMediaById(id),
+      this.api.getProgress(id),
+    ]).subscribe({
+      next: ([media, prog]) => {
+        if (media) {
+          this.item.set(media)
+          const pos = prog?.position_seconds ?? 0
+          this.resumePosition.set(pos)
+          this.canResume.set(pos > 10)
+          if (media.duration && pos > 10) {
+            this.progressPercent.set(Math.min(100, (pos / media.duration) * 100))
+          }
+          this.genres.set(media.genre ? [media.genre] : [])
 
-        if (media.tmdb_id) {
-          this.api.getCredits(id).subscribe({
-            next: (c) => {
-              this.credits.set(c)
-              if (c.genres.length) this.genres.set(c.genres)
-            },
-            error: () => {},
-          })
+          if (media.tmdb_id) {
+            this.api.getCredits(id).subscribe({
+              next: (c) => {
+                this.credits.set(c)
+                if (c.genres.length) this.genres.set(c.genres)
+              },
+              error: () => {},
+            })
+          }
         }
-      }
-      this.loading.set(false)
-    }).catch(() => this.loading.set(false))
+        this.loading.set(false)
+      },
+      error: () => this.loading.set(false),
+    })
   }
 
   directors() {

@@ -1,12 +1,12 @@
-import { Component, Input, inject } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, Input, inject } from '@angular/core'
+
 import { DisplaySettingsService } from '../../services/display-settings.service'
 
 @Component({
-  selector: 'app-person-tile',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './person-tile.component.html',
+    selector: 'app-person-tile',
+    imports: [],
+    templateUrl: './person-tile.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PersonTileComponent {
   ds = inject(DisplaySettingsService)

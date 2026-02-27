@@ -1,5 +1,5 @@
-import { Component, Output, EventEmitter, inject, signal, computed, OnInit } from '@angular/core'
-import { CommonModule } from '@angular/common'
+import { Component, ChangeDetectionStrategy, Output, EventEmitter, inject, signal, computed, OnInit } from '@angular/core'
+
 import { FormsModule } from '@angular/forms'
 import { RowOrderService, mergeRowOrder } from '../../services/row-order.service'
 import { CollectionsService } from '../../services/collections.service'
@@ -8,10 +8,10 @@ import { Collection } from '../../models/media.model'
 const DECADES = ['1920','1930','1940','1950','1960','1970','1980','1990','2000','2010','2020']
 
 @Component({
-  selector: 'app-collection-manager',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  templateUrl: './collection-manager.component.html',
+    selector: 'app-collection-manager',
+    imports: [FormsModule],
+    templateUrl: './collection-manager.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CollectionManagerComponent implements OnInit {
   @Output() closed = new EventEmitter<void>()
