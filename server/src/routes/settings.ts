@@ -19,6 +19,16 @@ export async function settingsRoutes(fastify: FastifyInstance): Promise<void> {
   fastify.addHook('preHandler', requireAdmin(fastify))
   // GET /api/settings/pick-folder — opens a native OS folder picker dialog
   fastify.get('/settings/pick-folder', async (_request, reply) => {
+    // When running inside Electron, use the native dialog injected by the main process
+    const electronDialog = (global as any).__electronDialog
+    if (electronDialog) {
+      try {
+        return await electronDialog()
+      } catch {
+        return reply.status(500).send({ error: 'Failed to open folder picker' })
+      }
+    }
+
     const platform = os.platform()
 
     try {

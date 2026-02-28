@@ -133,6 +133,8 @@
 
 .dvd-case-perspective {
   perspective: 800px;
+  margin-inline: -12px;
+  padding-inline: 12px;
 }
 
 .dvd-case {

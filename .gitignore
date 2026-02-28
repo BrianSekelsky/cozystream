@@ -10,6 +10,7 @@
 # Node modules and dependency files
 /node_modules/
 server/node_modules/
+server/dist/
 /package-lock.json
 server/package-lock.json
 /yarn.lock
@@ -25,6 +26,17 @@ server/yarn.lock
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Electron build output
+/out/
+electron/dist/
+
+# Native macOS build output
+native/build/
+
+# webOS TV build output
+webos/build/
+webos/*.ipk
 
 # Logs
 npm-debug.log*

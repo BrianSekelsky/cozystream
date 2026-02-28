@@ -1,14 +1,27 @@
 {
   "name": "cozystream-angular",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "main": "electron/dist/main.js",
   "scripts": {
     "ng": "ng",
-    "dev": "concurrently \"npm run dev:server\" \"ng serve\"",
-    "dev:client": "ng serve",
+
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
+    "dev:web": "ng serve cozystream-angular",
     "dev:server": "cd server && npx tsx watch src/index.ts",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "dev:tv": "ng serve cozystream-tv --port 4201",
+    "dev:electron": "concurrently \"npm run dev:server\" \"npm run dev:web\" \"wait-on http://localhost:3001/health && electron electron/dist/main.js\"",
+
+    "build": "ng build cozystream-angular",
+    "build:tv": "ng build cozystream-tv",
+    "build:server": "cd server && npm run build",
+    "build:electron": "tsc -p electron/tsconfig.json",
+
+    "package:native": "npm run build:server && npm run build && make -C native package",
+    "package:native:dmg": "npm run build:server && npm run build && make -C native dmg",
+    "package:tv": "npm run build:tv && node webos/package.js",
+    "package:electron": "npx @electron/rebuild -f -w better-sqlite3 --module-dir server && npm run build:server && npm run build && npm run build:electron && electron-forge package",
+
+    "test": "ng test cozystream-angular"
   },
   "private": true,
   "dependencies": {
@@ -29,9 +42,14 @@
     "@angular-devkit/build-angular": "^21.2.0",
     "@angular/cli": "^21.2.0",
     "@angular/compiler-cli": "^21.2.0",
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/maker-dmg": "^7.6.0",
+    "@electron-forge/maker-zip": "^7.6.0",
+    "@electron/rebuild": "^3.7.1",
     "@types/jasmine": "~5.1.0",
     "autoprefixer": "^10.4.24",
     "concurrently": "^9.2.1",
+    "electron": "^34.2.0",
     "jasmine-core": "~5.2.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -40,6 +58,7 @@
     "karma-jasmine-html-reporter": "~2.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
-    "typescript": "~5.9.3"
+    "typescript": "~5.9.3",
+    "wait-on": "^8.0.3"
   }
 }

@@ -8,6 +8,7 @@ import { execFile } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import { getFfmpegPath } from '../utils/ffmpeg'
 
 // Max buffer for subtitle extraction (10MB — subtitles are text, usually small)
 const EXEC_MAX_BUFFER = 10 * 1024 * 1024
@@ -292,7 +293,7 @@ export async function streamingRoutes(fastify: FastifyInstance): Promise<void> {
 function extractSubtitleToVtt(subtitlePath: string): Promise<string> {
   const tmpOut = path.join(os.tmpdir(), `cozystream-sub-${Date.now()}.vtt`)
   return new Promise((resolve, reject) => {
-    execFile('ffmpeg', [
+    execFile(getFfmpegPath(), [
       '-y', '-i', subtitlePath,
       '-f', 'webvtt',
       tmpOut,
@@ -317,7 +318,7 @@ function extractSubtitleToVtt(subtitlePath: string): Promise<string> {
 function extractEmbeddedSubtitleToVtt(videoPath: string, streamIndex: number): Promise<string> {
   const tmpOut = path.join(os.tmpdir(), `cozystream-sub-${Date.now()}.vtt`)
   return new Promise((resolve, reject) => {
-    execFile('ffmpeg', [
+    execFile(getFfmpegPath(), [
       '-y', '-i', videoPath,
       '-map', `0:${streamIndex}`,
       '-f', 'webvtt',

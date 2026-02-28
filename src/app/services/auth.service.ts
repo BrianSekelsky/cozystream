@@ -9,12 +9,12 @@ const REFRESH_INTERVAL = 6 * 60 * 60 * 1000 // 6 hours
 
 @Injectable({ providedIn: 'root' })
 export class AuthService implements OnDestroy {
-  private http = inject(HttpClient)
-  private router = inject(Router)
-  private base = '/api/auth'
+  protected http = inject(HttpClient)
+  protected router = inject(Router)
+  protected base = '/api/auth'
   private refreshTimer?: ReturnType<typeof setInterval>
 
-  private _user = signal<User | null>(this.loadUser())
+  protected _user = signal<User | null>(this.loadUser())
 
   readonly user = this._user.asReadonly()
   readonly isLoggedIn = computed(() => !!this._user())
@@ -103,7 +103,7 @@ export class AuthService implements OnDestroy {
 
   // --- Internal ---
 
-  private saveAuth(response: AuthResponse): void {
+  protected saveAuth(response: AuthResponse): void {
     this._user.set(response.user)
     localStorage.setItem(USER_KEY, JSON.stringify(response.user))
   }

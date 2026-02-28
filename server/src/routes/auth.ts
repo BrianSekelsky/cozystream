@@ -104,6 +104,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
 
     return {
       user: { id: userId, username, displayName, role },
+      token,
     }
   })
 
@@ -140,6 +141,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
         displayName: user.display_name,
         role: user.role,
       },
+      token,
     }
   })
 
@@ -156,7 +158,7 @@ export async function authRoutes(fastify: FastifyInstance): Promise<void> {
     )
     setAuthCookie(reply, token)
 
-    return { id: user.id, username: user.username, displayName: user.display_name, role: user.role }
+    return { id: user.id, username: user.username, displayName: user.display_name, role: user.role, token }
   })
 
   // Authenticated: logout (clear httpOnly cookie)

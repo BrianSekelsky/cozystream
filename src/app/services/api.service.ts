@@ -9,7 +9,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient)
-  private base = '/api'
+  protected base = '/api'
 
   // ── Library ────────────────────────────────────────────────────────────
 

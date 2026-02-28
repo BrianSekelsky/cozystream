@@ -1,0 +1,13 @@
+{
+  "id": "com.cozystream.tv",
+  "version": "0.1.0",
+  "vendor": "CozyStream",
+  "type": "web",
+  "main": "index.html",
+  "title": "CozyStream",
+  "icon": "icon80.png",
+  "largeIcon": "icon130.png",
+  "bgColor": "black",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": false
+}

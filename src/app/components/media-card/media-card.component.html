@@ -30,82 +30,75 @@
     <!-- DVD Case container — extra bottom padding reserves space for the revealed label -->
     <div class="dvd-case-perspective pb-8">
       <!-- The case itself (slides up on hover) -->
-      <div [class]="'dvd-case cursor-pointer relative overflow-hidden ' + dvdCaseCornerClass()" (click)="navigate()">
-        <!-- Spine -->
-        <div [class]="'dvd-spine ' + dvdSpineCornerClass()"></div>
+      <div [class]="'dvd-case cursor-pointer ' + dvdCaseCornerClass()" (click)="navigate()">
+        <div [class]="'relative overflow-hidden ' + dvdCaseCornerClass()">
+          <!-- Spine -->
+          <div [class]="'dvd-spine ' + dvdSpineCornerClass()"></div>
 
-        <!-- Poster -->
-        @if (item.poster_url) {
-          <img
-            loading="lazy"
-            [src]="item.poster_url"
-            [alt]="item.title"
-            class="w-full aspect-[2/3] object-cover"
-          />
-        } @else {
-          <div class="w-full aspect-[2/3] bg-white/10 flex items-center justify-center">
-            <svg class="w-10 h-10 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-                d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
-            </svg>
-          </div>
-        }
+          <!-- Poster -->
+          @if (item.poster_url) {
+            <img
+              loading="lazy"
+              [src]="item.poster_url"
+              [alt]="item.title"
+              class="w-full aspect-[2/3] object-cover"
+            />
+          } @else {
+            <div class="w-full aspect-[2/3] bg-white/10 flex items-center justify-center">
+              <svg class="w-10 h-10 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                  d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z" />
+              </svg>
+            </div>
+          }
 
-        <!-- Hover overlay — play button -->
-        <div class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors duration-200 flex items-center justify-center pointer-events-none">
-          <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-white/20 rounded-full p-3 backdrop-blur-sm">
-            <svg class="w-6 h-6" fill="white" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
+          <!-- Action icons -->
+          <div class="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <button (click)="handleFavorite($event)"
+              title="Toggle favorite"
+              class="bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-1.5 transition-colors">
+              <svg class="w-4 h-4"
+                [attr.fill]="isFavorite() ? '#ef4444' : 'none'"
+                [attr.stroke]="isFavorite() ? '#ef4444' : 'white'"
+                stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+            <button (click)="handleEdit($event)"
+              title="Edit metadata"
+              class="bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-1.5 transition-colors">
+              <svg class="w-4 h-4" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+            <button (click)="toggleMenu($event)"
+              title="More options"
+              class="bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-1.5 transition-colors">
+              <svg class="w-4 h-4" fill="white" viewBox="0 0 24 24">
+                <circle cx="5" cy="12" r="1.5" />
+                <circle cx="12" cy="12" r="1.5" />
+                <circle cx="19" cy="12" r="1.5" />
+              </svg>
+            </button>
           </div>
+
+          <!-- Progress bar -->
+          @if (progress !== undefined && progress > 0 && progress < 1) {
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+              <div class="h-full bg-accent" [style.width.%]="Math.round(progress * 100)"></div>
+            </div>
+          }
+
+          <!-- TV badge -->
+          @if (item.type === 'episode') {
+            <div class="absolute top-2 left-2 bg-black/60 text-[10px] font-medium px-1.5 py-0.5 rounded uppercase tracking-wide backdrop-blur-sm"
+              style="color: rgba(255,255,255,0.8)">
+              TV
+            </div>
+          }
         </div>
-
-        <!-- Action icons -->
-        <div class="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          <button (click)="handleFavorite($event)"
-            title="Toggle favorite"
-            class="bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-1.5 transition-colors">
-            <svg class="w-4 h-4"
-              [attr.fill]="isFavorite() ? '#ef4444' : 'none'"
-              [attr.stroke]="isFavorite() ? '#ef4444' : 'white'"
-              stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-            </svg>
-          </button>
-          <button (click)="handleEdit($event)"
-            title="Edit metadata"
-            class="bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-1.5 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round"
-                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
-          <button (click)="toggleMenu($event)"
-            title="More options"
-            class="bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-1.5 transition-colors">
-            <svg class="w-4 h-4" fill="white" viewBox="0 0 24 24">
-              <circle cx="5" cy="12" r="1.5" />
-              <circle cx="12" cy="12" r="1.5" />
-              <circle cx="19" cy="12" r="1.5" />
-            </svg>
-          </button>
-        </div>
-
-        <!-- Progress bar -->
-        @if (progress !== undefined && progress > 0 && progress < 1) {
-          <div class="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-            <div class="h-full bg-accent" [style.width.%]="Math.round(progress * 100)"></div>
-          </div>
-        }
-
-        <!-- TV badge -->
-        @if (item.type === 'episode') {
-          <div class="absolute top-2 left-2 bg-black/60 text-[10px] font-medium px-1.5 py-0.5 rounded uppercase tracking-wide backdrop-blur-sm"
-            style="color: rgba(255,255,255,0.8)">
-            TV
-          </div>
-        }
       </div>
 
       <!-- Label revealed behind the case on hover -->

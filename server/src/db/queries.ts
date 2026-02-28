@@ -17,8 +17,8 @@ export interface MediaItem {
   description: string | null
   rating: number | null
   director: string | null
-  is_favorite: number
-  in_watchlist: number
+  is_favorite?: number
+  in_watchlist?: number
   added_at: string
 }
 
